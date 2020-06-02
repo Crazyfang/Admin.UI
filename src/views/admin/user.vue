@@ -53,6 +53,16 @@
       <el-table-column type="index" width="80" label="#" />
       <el-table-column prop="userName" label="用户名" width />
       <el-table-column prop="nickName" label="昵称" width />
+      <el-table-column prop="departmentNames" label="部门名称" width>
+        <template v-slot="{row}">
+          {{ row.departmentNames ? row.departmentNames.join(','):'' }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="departmentCodes" label="部门编号" width>
+        <template v-slot="{row}">
+          {{ row.departmentCodes ? row.departmentCodes.join(','):'' }}
+        </template>
+      </el-table-column>
       <el-table-column prop="roleNames" label="角色" width>
         <template v-slot="{row}">
           {{ row.roleNames ? row.roleNames.join(','):'' }}
@@ -145,6 +155,22 @@
                   </el-select>
                 </el-form-item>
               </el-col>
+              <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="6">
+                <el-form-item label="部门" prop="departmentCodes">
+                  <treeselect
+                    v-model="addForm.departmentIds"
+                    :multiple="true"
+                    :options="departments"
+                    :max-height="200"
+                    :flat="true"
+                    :append-to-body="true"
+                    :z-index="20000"
+                    :default-expand-level="1"
+                    :normalizer="normalizer"
+                    placeholder="为用户选择部门"
+                  />
+                </el-form-item>
+              </el-col>
             </el-col>
           </el-row>
         </el-form>
@@ -198,6 +224,22 @@
                   </el-select>
                 </el-form-item>
               </el-col>
+              <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="6">
+                <el-form-item label="部门" prop="departmentCodes">
+                  <treeselect
+                    v-model="editForm.departmentIds"
+                    :multiple="true"
+                    :options="departments"
+                    :max-height="200"
+                    :flat="true"
+                    :append-to-body="true"
+                    :z-index="20000"
+                    :default-expand-level="1"
+                    :normalizer="normalizer"
+                    placeholder="为用户选择部门"
+                  />
+                </el-form-item>
+              </el-col>
             </el-col>
           </el-row>
         </el-form>
@@ -211,16 +253,19 @@
 </template>
 
 <script>
-import { formatTime } from '@/utils'
+import { formatTime, listToTree } from '@/utils'
 import { getRoleListPage } from '@/api/admin/role'
 import { getUserListPage, removeUser, batchRemoveUser, editUser, addUser, getUser } from '@/api/admin/user'
+import { getDepartmentList } from '@/api/admin/department'
 import Container from '@/components/Container'
 import ConfirmButton from '@/components/ConfirmButton'
 import Pagination from '@/components/Pagination'
+import Treeselect from '@riophae/vue-treeselect'
+import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 
 export default {
   name: 'Users',
-  components: { Container, ConfirmButton, Pagination },
+  components: { Container, ConfirmButton, Pagination, Treeselect },
   data() {
     return {
       filter: {
@@ -228,6 +273,7 @@ export default {
       },
       users: [],
       roles: [],
+      departments: [],
       pager: {},
       listLoading: false,
       sels: [], // 列表选中列
@@ -244,7 +290,8 @@ export default {
         id: 0,
         userName: '',
         nickName: '',
-        roleIds: []
+        roleIds: [],
+        departmentIds: []
       },
 
       addFormVisible: false, // 新增界面是否显示
@@ -258,14 +305,22 @@ export default {
         userName: '',
         nickName: '',
         password: '',
-        roleIds: []
+        roleIds: [],
+        departmentIds: []
       },
-      deleteLoading: false
+      deleteLoading: false,
+      normalizer(node) {
+        return {
+          id: node.id,
+          label: node.departmentName,
+          children: node.children
+        }
+      }
     }
   },
   async mounted() {
     this.pager = this.$refs.pager.getPager()
-    this.getUsers()
+    await this.getUsers()
   },
   methods: {
     formatCreatedTime(row, column, time) {
@@ -306,17 +361,28 @@ export default {
         this.roles = res.data.list
       }
     },
+    async getDepartmentListPage() {
+      const res = await getDepartmentList()
+      if (res && res.success) {
+        console.log(res.data)
+        this.departments = listToTree(res.data)
+      }
+    },
     // 显示编辑界面
     async onEdit(index, row) {
       const loading = this.$loading()
       if (this.roles.length === 0) {
         await this.getRoleListPage()
       }
+      if (this.departments.length === 0) {
+        await this.getDepartmentListPage()
+      }
       const res = await getUser({ id: row.id })
       loading.close()
       if (res && res.success) {
         const data = res.data
         this.editForm = data
+        // this.editForm.departmentIds = [1]
         this.editFormVisible = true
       }
     },
