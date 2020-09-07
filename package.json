@@ -61,6 +61,6 @@
     "sass-loader": "^8.0.2",
     "vue-template-compiler": "^2.6.11",
     "webpack": "^4.44.1",
-    "webpack-dev-server": "^2.7.1"
+    "webpack-dev-server": "^3.11.0"
   }
 }
