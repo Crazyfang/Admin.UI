@@ -42,11 +42,13 @@
           <el-col :span="4" class="right-menu">
             <el-dropdown trigger="click">
               <div class="right-menu-item">
-                <el-image class="user-avatar el-avatar el-avatar--circle" :src="avatar" style="height:36px;width:36px;line-height: 36px;">
-                  <template #error>
-                    <img :src="avatarDefault">
-                  </template>
-                </el-image>
+                <el-badge is-dot class="item" :hidden="notifyCount === 0">
+                  <el-image class="user-avatar el-avatar el-avatar--circle" :src="avatar" style="height:36px;width:36px;line-height: 36px;">
+                    <template #error>
+                      <img :src="avatarDefault">
+                    </template>
+                  </el-image>
+                </el-badge>
                 <span>{{ userName }}</span>
               </div>
               <template #dropdown>
@@ -54,6 +56,10 @@
                   :visible-arrow="false"
                   style="margin-top: 2px;width:160px;"
                 >
+                  <el-dropdown-item icon="el-icon-warning-outline" @click.native="Notify">
+                    消息通知
+                    <el-tag v-if="notifyCount !== 0" type="danger" effect="dark" style="float: right;">{{ notifyCount }}</el-tag>
+                  </el-dropdown-item>
                   <el-dropdown-item icon="el-icon-setting" @click.native="Setting">个人设置</el-dropdown-item>
                   <el-dropdown-item divided icon="el-icon-switch-button" @click.native="logout">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
@@ -188,6 +194,7 @@ import MenuItem from './components/MenuItem'
 import { listToTree, getTreeParents } from '@/utils'
 import Sortable from 'sortablejs'
 import { isExternalLink } from '@/utils/validate'
+import { getNotifyCount } from '@/api/record/notify'
 
 export default {
   name: 'AppMain',
@@ -196,10 +203,11 @@ export default {
   },
   data() {
     return {
+      notifyCount: 0,
       openeds: [],
       menuTree: [],
-      projectName: 'Admin',
-      projectNameShort: 'AD',
+      projectName: '信贷流转',
+      projectNameShort: '信贷',
       avatarDefault: require('@/assets/avatar.png'),
       collapsedClass: 'menu-expanded',
       isCollapse: false,
@@ -291,6 +299,7 @@ export default {
       }
     },
     tabsList() {
+      console.log(this.tabsList)
       const views = this.tabsList.map(t => t.name)
       this.$store.commit('tabsView/set_cached_view', views)
       this.$store.commit('app/saveTabsData', JSON.stringify(this.tabsList))
@@ -321,13 +330,51 @@ export default {
 
     this.addTab()
   },
+  mounted() {
+    if (this.signalr.state === 'Disconnected') {
+      this.signalr.start().then(() => {
+        console.log('连接')
+      })
+    }
+    this.signalr.off('Show')
+    this.signalr.on('Show', (info, message) => {
+      if (info === '信息刷新') {
+        this.getNotifyCount()
+        if (message) {
+          this.$notify.info({
+            title: '消息',
+            message: message
+          })
+        }
+      }
+    })
+    this.getNotifyCount()
+  },
   updated() {
     this.setSort()
   },
   methods: {
+    testFunc: function() {
+      alert(123)
+      this.signalr.stop()
+    },
+    // 获取通知个数
+    getNotifyCount: async function() {
+      const res = await getNotifyCount()
+
+      if (res.success) {
+        this.notifyCount = res.data
+      } else {
+        this.$message({
+          message: res.msg,
+          type: 'error'
+        })
+      }
+    },
     // 点击选项卡
     onTabClick(tab) {
       if (tab.name && tab.name !== this.tabName) {
+        console.log(tab.name)
         this.$router.push(tab.name)
       }
     },
@@ -356,6 +403,7 @@ export default {
       }
 
       if (tab.path === '/') {
+        console.log(tab)
         this.tabsList.unshift(tab)
       } else {
         this.tabsList.push(tab)
@@ -383,6 +431,10 @@ export default {
     // 设置
     Setting: function() {
       this.$router.push('/account/settings')
+    },
+    // 通知首页
+    Notify: function() {
+      this.$router.push('/record/notify')
     },
     // 移动端选择菜单
     onSelectMenu: function() {

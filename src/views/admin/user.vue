@@ -2,41 +2,73 @@
   <container>
     <!--查询-->
     <template #header>
-      <el-form class="ad-form-query" :inline="true" :model="filter" @submit.native.prevent>
-        <el-form-item>
-          <el-input
-            v-model="filter.userName"
-            placeholder="用户名/昵称"
-            clearable
-            @keyup.enter.native="getUsers"
-          >
-            <template #prefix>
-              <i class="el-input__icon el-icon-search" />
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="getUsers">查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="onAdd">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <confirm-button
-            :disabled="sels.length === 0"
-            :type="'delete'"
-            :placement="'bottom-end'"
-            :loading="deleteLoading"
-            :validate="batchDeleteValidate"
-            style="margin-left: 0px;"
-            @click="onBatchDelete"
-          >
-            <template #content>
-              <p>确定要批量删除吗？</p>
-            </template>
-            批量删除
-          </confirm-button>
-        </el-form-item>
+      <el-form class="ad-form-query" :inline="true" :model="filter" label-position="left" @submit.native.prevent>
+        <el-row :gutter="20">
+          <el-col :span="6">
+            <el-form-item label-width="100px" label="柜员号或姓名">
+              <el-input
+                v-model="filter.userName"
+                placeholder="柜员号/姓名"
+                clearable
+                @keyup.enter.native="getUsers"
+              >
+                <template #prefix>
+                  <i class="el-input__icon el-icon-search" />
+                </template>
+              </el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item>
+              <treeselect
+                v-model="filter.departmentId"
+                :multiple="false"
+                :options="departments"
+                :max-height="200"
+                :flat="false"
+                :default-expand-level="1"
+                :normalizer="normalizer"
+                placeholder="选择部门"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="所属角色" label-width="80px">
+              <el-select v-model="filter.roleId" placeholder="请选择角色" clearable>
+                <el-option
+                  v-for="item in roles"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item>
+              <el-button type="primary" @click="getUsers">查询</el-button>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="onAdd">新增</el-button>
+            </el-form-item>
+            <el-form-item>
+              <confirm-button
+                :disabled="sels.length === 0"
+                :type="'delete'"
+                :placement="'bottom-end'"
+                :loading="deleteLoading"
+                :validate="batchDeleteValidate"
+                style="margin-left: 0px;"
+                @click="onBatchDelete"
+              >
+                <template #content>
+                  <p>确定要批量删除吗？</p>
+                </template>
+                批量删除
+              </confirm-button>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
     </template>
 
@@ -51,8 +83,8 @@
     >
       <el-table-column type="selection" width="50" />
       <el-table-column type="index" width="80" label="#" />
-      <el-table-column prop="userName" label="用户名" width />
-      <el-table-column prop="nickName" label="昵称" width />
+      <el-table-column prop="userName" label="柜员号" width />
+      <el-table-column prop="nickName" label="姓名" width />
       <el-table-column prop="departmentNames" label="部门名称" width>
         <template v-slot="{row}">
           {{ row.departmentNames ? row.departmentNames.join(','):'' }}
@@ -71,8 +103,8 @@
       <el-table-column prop="createdTime" label="创建时间" :formatter="formatCreatedTime" width />
       <el-table-column prop="status" label="状态" width>
         <template v-slot="{row}">
-          <el-tag :type="row.status == 0 ? 'success' : 'danger'" disable-transitions>
-            {{ row.status == 0 ? '正常' : '禁用' }}
+          <el-tag :type="row.status === 0 ? 'success' : 'danger'" disable-transitions>
+            {{ row.status === 0 ? '正常' : '禁用' }}
           </el-tag>
         </template>
       </el-table-column>
@@ -269,7 +301,9 @@ export default {
   data() {
     return {
       filter: {
-        userName: ''
+        userName: '',
+        departmentId: null,
+        roleId: null
       },
       users: [],
       roles: [],
@@ -321,6 +355,8 @@ export default {
   async mounted() {
     this.pager = this.$refs.pager.getPager()
     await this.getUsers()
+    await this.getDepartmentListPage()
+    await this.getRoleListPage()
   },
   methods: {
     formatCreatedTime(row, column, time) {

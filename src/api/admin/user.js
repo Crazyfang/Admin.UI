@@ -28,3 +28,6 @@ export const changePassword = params => {
 export const getBasic = params => {
   return request.get('/api/admin/user/getbasic', { params: params })
 }
+export const getUserSelect = params => {
+  return request.get('/api/admin/user/getUserSelect', { params: params })
+}

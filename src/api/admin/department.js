@@ -19,3 +19,6 @@ export const removeDepartment = params => {
 export const addDepartment = params => {
   return request.post('/api/admin/department/addDepartment', params)
 }
+export const getSelectList = params => {
+  return request.get('/api/admin/department/GetSelectList', { params })
+}

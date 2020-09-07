@@ -1,3 +1,3 @@
 export default {
-  title: '中台admin'
+  title: '信贷存证系统'
 }

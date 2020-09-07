@@ -2,7 +2,8 @@ import axios from 'axios'
 import store from '@/store'
 const requestAxios = axios.create({
   baseURL: '', // url = base url + request url
-  timeout: 20000 // 请求延时
+  timeout: 20000, // 请求延时
+  withCredentials: false
 })
 
 requestAxios.interceptors.request.use(

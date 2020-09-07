@@ -59,6 +59,7 @@ module.exports = {
       hints: false
     }
   },
+  transpileDependencies: ['webpack-dev-server/client', 'element-ui'],
   // webpack配置
   // see https://github.com/vuejs/vue-cli/blob/dev/docs/webpack.md
   chainWebpack(config) {
@@ -72,8 +73,8 @@ module.exports = {
 
     config
       // https://webpack.js.org/configuration/devtool/#development
-      .when(isDev, config => config.devtool('cheap-source-map'))
-
+      .when(isDev, config => config.devtool('source-map'))
+      // cheap-source-map
     config.when(!isDev, config => {
       config.optimization.splitChunks({
         chunks: 'all',
@@ -100,6 +101,7 @@ module.exports = {
       })
       config.optimization.runtimeChunk('single')
     })
+    config.entry.app = ['babel-polyfill', './src/main.js']
   },
   // css相关配置
   css: {

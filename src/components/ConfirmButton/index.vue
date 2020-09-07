@@ -35,7 +35,7 @@
       @hide="hide"
     >
       <slot name="content">
-        <p>{{ type === 'delete' ? '确定要删除该记录吗？' : '确定提交吗？' }}</p>
+        <p>{{ type === 'delete' ? '确定要删除该记录吗？' : type === 'submit' ? '确定提交吗?' : content }}</p>
       </slot>
       <slot name="footer">
         <div style="text-align: right; margin: 0">
@@ -99,6 +99,10 @@ export default {
       default: function() {
         return {}
       }
+    },
+    buttonTextString: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -106,7 +110,7 @@ export default {
       visible: false,
       disabledPopover: this.validate !== null,
       buttonType: this.type === 'delete' ? 'danger' : (this.type === 'submit' ? 'primary' : this.type),
-      buttonText: this.type === 'delete' ? '删除' : (this.type === 'submit' ? '提交' : ''),
+      buttonText: this.type === 'delete' ? '删除' : (this.type === 'submit' ? '提交' : this.buttonTextString),
       style: ''
     }
   },

@@ -6,6 +6,7 @@ import { getToken } from '@/utils/auth'
 import Layout from '@/layout'
 import store from '@/store'
 const _import = require('./_import_' + process.env.NODE_ENV) // 获取组件的方法
+// var createGuest = require('cross-domain-storage/guest')
 
 /**
  * 重写路由的push方法
@@ -24,6 +25,22 @@ const constantRoutes = [
     hidden: true,
     meta: {
       title: '登录'
+    }
+  },
+  {
+    path: '/print',
+    component: _import('/Record/print-page'),
+    hidden: true,
+    meta: {
+      title: '打印界面'
+    }
+  },
+  {
+    path: '/record',
+    component: _import('/Record/transfer-record'),
+    hidden: true,
+    meta: {
+      title: '测试'
     }
   }
 ]
@@ -99,7 +116,7 @@ export function addRoutes(menus = []) {
   }
 }
 
-const title = defaultSettings.title || '中台Admin后台管理系统'
+const title = defaultSettings.title || '信贷存证系统'
 // 获取页面标题
 function getPageTitle(pageTitle) {
   if (pageTitle) {
@@ -112,8 +129,19 @@ let count = 0
 // 路由全局前置守卫
 router.beforeEach(async(to, from, next) => {
   document.title = getPageTitle(to.meta.title)
+  // console.log('123')
+  // const tokens = getToken()
+  // console.log(tokens)
+  //
+  // if (!tokens) {
+  //   var bazStorage = createGuest('http://localhost:9997')
+  //   // eslint-disable-next-line handle-callback-err
+  //   bazStorage.get('token', function(error, value) {
+  //     setToken(value)
+  //     store.dispatch('user/getLoginInfo')
+  //   })
+  // }
   const token = getToken()
-
   if (token) {
     if (to.path === '/login') {
       // 自动登录判断

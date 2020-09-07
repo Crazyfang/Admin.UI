@@ -9,6 +9,10 @@ import Pagination from '@/components/ElementUI/Pagination'
 import 'element-ui/lib/theme-chalk/index.css'
 import 'font-awesome/css/font-awesome.min.css'
 
+import '@babel/polyfill'
+import Es6Promise from 'es6-promise'
+Es6Promise.polyfill()
+
 import lodash from 'lodash'
 import i18n from './lang' // 国际化
 
@@ -17,6 +21,8 @@ import '@/styles/index.scss'
 import App from './App.vue'
 import store from './store'
 import router from './router'
+import signalr from './utils/signalR'
+Vue.use(signalr)
 
 Vue.use(ElementUI, {
   size: 'mini', // large / medium / small / mini

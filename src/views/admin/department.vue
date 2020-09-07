@@ -202,6 +202,7 @@ export default {
       }
       this.listLoading = true
       const res = await getDepartmentList(para)
+      console.log(res)
       this.listLoading = false
 
       if (!res.success) {

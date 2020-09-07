@@ -3,8 +3,8 @@
     <el-scrollbar class="page-component__scroll" style="height:100%;">
       <div style="height:10%;" />
       <el-card shadow="always" class="login-card" :body-style="{ padding: '0px' }">
-        <div class="title">Admin</div>
-        <div class="desc">admin 后台管理系统</div>
+        <div class="title">信贷流转</div>
+        <div class="desc">信贷流转管理系统</div>
         <el-form ref="form" :model="form" :rules="formRules" size="medium">
           <el-form-item prop="userName">
             <el-input
@@ -81,8 +81,8 @@ export default {
   data() {
     return {
       form: {
-        userName: 'admin',
-        password: '111111',
+        userName: '',
+        password: '',
         verifyCode: '',
         verifyCodeKey: '',
         passwordKey: ''
@@ -141,21 +141,21 @@ export default {
         }
 
         if (res.data === 1) {
-          this.getLoginVerifyCode()
+          await this.getLoginVerifyCode()
           this.$refs.verifyCode.focus()
         } else if (res.data === 2) {
           this.$refs.verifyCode.focus()
         } else if (res.data === 3) {
-          this.getLoginVerifyCode()
+          await this.getLoginVerifyCode()
           this.$refs.userName.focus()
         } else if (res.data === 4) {
-          this.getLoginVerifyCode()
+          await this.getLoginVerifyCode()
           this.$refs.password.focus()
         }
         return
       }
 
-      this.getLoginInfo()
+      await this.getLoginInfo()
     },
     async getLoginInfo() {
       const res = await this.$store.dispatch('user/getLoginInfo')
@@ -190,7 +190,7 @@ export default {
       }
 
       const redirect = this.$route.query ? this.$route.query.redirect : ''
-      this.$router.push({ path: redirect || '/' })
+      await this.$router.push({ path: redirect || '/' })
     },
 
     // 获取验证码
