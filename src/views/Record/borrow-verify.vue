@@ -889,6 +889,7 @@ export default {
           this.infoVisible = false
           await this.onHandOverGetList()
         } else {
+          console.log(res)
           this.$message({
             message: res.msg,
             type: 'error'
