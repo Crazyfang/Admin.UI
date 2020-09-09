@@ -57,7 +57,8 @@
     </el-table>
 
     <el-dialog title="详细信息添加" :visible.sync="addFormVisible" width="60%">
-      <el-form ref="surveyForm" label-width="120px">
+      <el-form ref="surveyForm" label-width="150px">
+        <el-divider content-position="left">第一部分</el-divider>
         <el-form-item label="关系人">
           <el-row>
             <el-col :span="4">
@@ -74,7 +75,7 @@
             </el-col>
           </el-row>
         </el-form-item>
-
+        <el-divider content-position="left">第二部分</el-divider>
         <el-form-item label="无固定收入情况">
           <el-radio v-model="addForm.instability" :label="true">是</el-radio>
           <el-radio v-model="addForm.instability" :label="false">否</el-radio>
@@ -96,6 +97,7 @@
           <el-radio v-model="addForm.lending" :label="false">否</el-radio>
         </el-form-item>
 
+        <el-divider content-position="left">第三部分</el-divider>
         <el-row v-if="displaySign">
           <el-col :span="24">
             <span>家庭自建房产情况</span>
@@ -157,6 +159,7 @@
             </el-input>
           </el-col>
         </el-row>
+        <el-divider content-position="left">第四部分</el-divider>
         <el-row v-if="displaySign">
           <el-col :span="24">
             <span>存在家庭收入不稳定的情况</span>

@@ -210,6 +210,45 @@
       </el-tab-pane>
       <el-tab-pane label="档案移交确认">
         <container>
+          <template #header>
+            <el-form :inline="true">
+              <el-row>
+                <el-col :span="4">
+                  <el-form-item>
+                    <treeselect
+                      v-model="handOverFilter.managerDepartmentId"
+                      :multiple="false"
+                      :options="departments"
+                      :max-height="200"
+                      :flat="false"
+                      :default-expand-level="1"
+                      :normalizer="normalizer"
+                      placeholder="选择部门"
+                      @select="(node, instanceId) => changeDepartment(node)"
+                    />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="4">
+                  <el-form-item>
+                    <el-select v-model="handOverFilter.managerUserId" filterable placeholder="请选择">
+                      <el-option
+                        v-for="item in userList"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                      >
+                        <span style="float: left">{{ item.peopleId }}</span>
+                        <span style="float: right; color: #8492a6; font-size: 13px">{{ item.label }}</span>
+                      </el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                  <el-button type="primary" @click.native="onHandOverGetList">查询</el-button>
+                </el-col>
+              </el-row>
+            </el-form>
+          </template>
           <!--列表-->
           <el-table
             ref="recordTable"
@@ -523,9 +562,13 @@
 <script>
 import ConfirmButton from '@/components/ConfirmButton'
 import Container from '@/components/Container/index'
-import { formatTime } from '@/utils'
+import { formatTime, listToTree } from '@/utils'
+import { getDepartmentList } from '@/api/admin/department'
+import { getUserSelect } from '@/api/admin/user'
 import { getVerifyList, getBorrowDetail, verifyBorrow, getReturnPage, returnRecord } from '@/api/record/recordborrow'
 import Pagination from '@/components/Pagination'
+import Treeselect from '@riophae/vue-treeselect'
+import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import { handOverPage, handOverBasicInfo, handOverCheck, getApplyChangeList, getApplyChangeDetail, acceptApplyChange, refuseApplyChange, refuseHandOver } from '@/api/record/record'
 
 export default {
@@ -533,10 +576,26 @@ export default {
   components: {
     Container,
     ConfirmButton,
-    Pagination
+    Pagination,
+    Treeselect
   },
   data() {
     return {
+      handOverFilter: {
+        managerDepartmentId: null,
+        managerUserId: null
+      },
+      // 用户列表
+      userList: [],
+      // 部门列表
+      departments: [],
+      normalizer(node) {
+        return {
+          id: node.id,
+          label: node.departmentName,
+          children: node.children
+        }
+      },
       verifyTemplate: {
         id: 0,
         verifyType: 0,
@@ -654,8 +713,32 @@ export default {
     this.onHandOverGetList()
     this.onGetReturnList()
     this.onGetApplyChangeList()
+    this.getDepartmentListPage()
   },
   methods: {
+    changeDepartment: async function(node) {
+      const id = {
+        id: node.id
+      }
+      const res = await getUserSelect(id)
+      this.userList = res.data
+    },
+    // 填充Select下拉框用户列表
+    getUserSelect: async function(node) {
+      const id = node
+      const res = await getUserSelect({ id: id })
+      if (res && res.success) {
+        console.log(this.userList)
+        this.userList = res.data
+      }
+    },
+    // 获取部门列表填充部门下拉树
+    async getDepartmentListPage() {
+      const res = await getDepartmentList()
+      if (res && res.success) {
+        this.departments = listToTree(res.data)
+      }
+    },
     refuseHandOver: async function() {
       console.log(this.handOverRefuseReason)
       if (this.handOverRefuseReason) {
@@ -984,7 +1067,8 @@ export default {
     onHandOverGetList: async function() {
       const para = {
         currentPage: this.handOverPager.currentPage,
-        pageSize: this.handOverPager.pageSize
+        pageSize: this.handOverPager.pageSize,
+        filter: this.handOverFilter
       }
       this.recordlistLoading = true
       const res = await handOverPage(para)
