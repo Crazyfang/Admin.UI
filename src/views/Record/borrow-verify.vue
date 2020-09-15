@@ -213,7 +213,7 @@
           <template #header>
             <el-form :inline="true">
               <el-row>
-                <el-col :span="4">
+                <el-col :span="8">
                   <el-form-item>
                     <treeselect
                       v-model="handOverFilter.managerDepartmentId"
@@ -228,9 +228,9 @@
                     />
                   </el-form-item>
                 </el-col>
-                <el-col :span="4">
+                <el-col :span="6">
                   <el-form-item>
-                    <el-select v-model="handOverFilter.managerUserId" filterable placeholder="请选择">
+                    <el-select v-model="handOverFilter.managerUserId" clearable placeholder="请选择">
                       <el-option
                         v-for="item in userList"
                         :key="item.value"
