@@ -128,6 +128,11 @@ export default {
         const isValid = this.validate(this.validateData)
         if (isValid) {
           this.disabledPopover = false
+        } else {
+          this.$message({
+            type: 'error',
+            message: '有必须输入的内容未填写！'
+          })
         }
       }
     },

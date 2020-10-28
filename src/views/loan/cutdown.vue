@@ -390,15 +390,35 @@ export default {
         beginTime: '',
         // timeType: 0,
         budget: [{ countMonth: '', item: [{
-          name: '担保类',
+          name: '信用',
           checked: false,
           wantedValue: null
         }, {
-          name: '信用类',
+          name: '抵押',
           checked: false,
           wantedValue: null
         }, {
-          name: '抵押类',
+          name: '联保',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '普通保证',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '其他质押',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '系统内存单质押',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '系统外股金质押',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '组合担保',
           checked: false,
           wantedValue: null
         }] }]
@@ -413,15 +433,35 @@ export default {
         beginTime: '',
         // timeType: 0,
         budget: [{ countMonth: '', item: [{
-          name: '担保类',
+          name: '信用',
           checked: false,
           wantedValue: null
         }, {
-          name: '信用类',
+          name: '抵押',
           checked: false,
           wantedValue: null
         }, {
-          name: '抵押类',
+          name: '联保',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '普通保证',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '其他质押',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '系统内存单质押',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '系统外股金质押',
+          checked: false,
+          wantedValue: null
+        }, {
+          name: '组合担保',
           checked: false,
           wantedValue: null
         }] }]
@@ -596,15 +636,35 @@ export default {
     // 添加考核月数
     addMonth: function(item) {
       item.push({ countMonth: '', item: [{
-        name: '担保类',
+        name: '信用',
         checked: false,
         wantedValue: null
       }, {
-        name: '信用类',
+        name: '抵押',
         checked: false,
         wantedValue: null
       }, {
-        name: '抵押类',
+        name: '联保',
+        checked: false,
+        wantedValue: null
+      }, {
+        name: '普通保证',
+        checked: false,
+        wantedValue: null
+      }, {
+        name: '其他质押',
+        checked: false,
+        wantedValue: null
+      }, {
+        name: '系统内存单质押',
+        checked: false,
+        wantedValue: null
+      }, {
+        name: '系统外股金质押',
+        checked: false,
+        wantedValue: null
+      }, {
+        name: '组合担保',
         checked: false,
         wantedValue: null
       }] })

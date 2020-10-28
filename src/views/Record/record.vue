@@ -169,19 +169,22 @@
       :close-on-click-modal="false"
       @close="onCloseAddForm"
     >
-      <el-form ref="addForm" :model="addForm.record" label-width="150px" label-position="left" :rules="addFormRules">
-        <el-form-item prop="recordUserName" label="档案用户姓名">
+      <el-form ref="addForm" :model="addForm" label-width="150px" label-position="left" :rules="addFormRules">
+        <el-form-item
+          prop="record.recordUserName"
+          label="档案用户姓名"
+        >
           <el-input v-model="addForm.record.recordUserName" auto-complete="off" />
         </el-form-item>
-        <el-form-item label="客户内码" prop="recordUserInCode">
+        <el-form-item label="客户内码" prop="record.recordUserInCode">
           <el-input v-model="addForm.record.recordUserInCode" auto-complete="off" />
         </el-form-item>
 
-        <el-form-item label="客户码" prop="recordUserCode">
+        <el-form-item label="客户码" prop="record.recordUserCode">
           <el-input v-model="addForm.record.recordUserCode" auto-complete="off" />
         </el-form-item>
 
-        <el-form-item label="档案归属支行" prop="managerDepartmentId">
+        <el-form-item label="档案归属支行" prop="record.managerDepartmentId">
           <treeselect
             v-model="addForm.record.managerDepartmentId"
             :multiple="false"
@@ -195,7 +198,7 @@
           />
         </el-form-item>
 
-        <el-form-item label="档案归属客户经理" prop="managerUserId">
+        <el-form-item label="档案归属客户经理" prop="record.managerUserId">
           <el-select v-model="addForm.record.managerUserId" filterable placeholder="请选择">
             <el-option
               v-for="item in userList"
@@ -209,7 +212,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="档案类型" prop="recordType">
+        <el-form-item label="档案类型" prop="record.recordType">
           <el-radio-group v-model="addForm.record.recordType" @change="addRadioChange">
             <el-radio v-for="item in recordTypeList" :key="item.id" :label="item.id">{{ item.recordTypeName }}</el-radio>
             <!--            <el-radio label="1">企业</el-radio>-->
@@ -217,7 +220,7 @@
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="授信到期日" prop="creditDueDate">
+        <el-form-item label="授信到期日" prop="record.creditDueDate">
           <el-date-picker
             v-model="addForm.record.creditDueDate"
             type="date"
@@ -230,16 +233,23 @@
         <el-row>
           <el-col :span="24">
             <el-collapse>
+              <!--              <el-form ref="addForm" :model="addForm">-->
               <el-collapse-item v-for="(item, arr) in addForm.fileList" :key="item.uid" :name="item.uid">
                 <template slot="title">
                   <span class="collapse-title">{{ item.name }} {{ item.remarks ? '-' + item.remarks : '' }} <el-button style="float: right" size="large" type="text" @click.stop="addRecordFileType(item, addForm.fileList, arr)">添加</el-button></span>
                 </template>
                 <el-row style="margin-bottom: 20px">
-                  <el-col :span="4">
-                    <span>备注项:</span>
-                  </el-col>
-                  <el-col :span="4">
-                    <el-input v-model="item.remarks" auto-complete="off" />
+                  <el-col v-if="item.hasContractNo" :span="8">
+                    <el-form-item
+                      v-if="item.hasContractNo && existsCheckedFile(item.children)"
+                      label="合同号"
+                      :prop="'fileList.' + arr + '.remarks'"
+                      :rules="{
+                        required: true, message: '合同号不能为空', trigger: 'blur'
+                      }"
+                    >
+                      <el-input v-model="item.remarks" auto-complete="off" />
+                    </el-form-item>
                   </el-col>
                   <el-col :span="4" style="margin-left: 30px">
                     <el-button type="primary" icon="el-icon-delete" @click.stop="delRecordFileType(addForm.fileList, arr)">删除当前文件类型</el-button>
@@ -260,53 +270,132 @@
                     />
                   </el-col>
                 </el-row>
-                <el-row v-for="child in item.children.filter(i => i.otherSign === 0)" :key="child.uid" style="margin-bottom: 20px;">
-                  <el-col :span="8">
-                    <el-checkbox v-model="child.checked" :label="child.name" border />
-                  </el-col>
-                  <el-col :span="7">
-                    <el-date-picker
-                      v-if="child.checked"
-                      v-model="child.creditDueDate"
-                      type="date"
-                      placeholder="选择日期"
-                      value-format="yyyy-MM-dd"
-                    />
-                  </el-col>
-                  <el-col :span="5" :offset="2">
-                    <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />
-                  </el-col>
-                </el-row>
-                <el-row v-for="other in item.children.filter(i => i.otherSign === 1)" :key="other.uid" style="margin-bottom: 20px">
-                  <el-col :span="8">
-                    <el-input v-model="other.name" placeholder="请输入其他文件名称" />
-                  </el-col>
-                  <el-col :span="6" :offset="1">
-                    <el-date-picker
-                      v-if="other.name"
-                      v-model="other.creditDueDate"
-                      type="date"
-                      placeholder="选择日期"
-                      value-format="yyyy-MM-dd"
-                    />
-                  </el-col>
-                  <el-col :span="4" :offset="2">
-                    <el-input-number v-if="other.name" v-model="other.num" :min="1" label="份数" />
-                  </el-col>
-                  <el-col :span="2" :offset="1">
-                    <el-button type="primary" icon="el-icon-delete" @click="deleteOther(item, other.uid)">删除</el-button>
-                  </el-col>
-                </el-row>
+                <div v-for="(child, indexOfChild) in item.children" :key="child.uid">
+                  <el-row style="margin-bottom: 20px">
+                    <el-col v-if="child.otherSign === 0" :span="8">
+                      <el-checkbox v-model="child.checked" :label="child.name" border />
+                    </el-col>
+                    <el-col :span="7">
+                      <el-form-item
+                        v-if="child.otherSign === 0 && child.checked && child.hasCreditDueDate"
+                        label-width="0px"
+                        :prop="'fileList.'+ arr +'.children.'+ indexOfChild +'.creditDueDate'"
+                        :rules="{
+                          required: true, message: '到期日不能为空', trigger: 'blur'
+                        }"
+                      >
+                        <el-date-picker
+                          v-if="child.checked && child.hasCreditDueDate"
+                          v-model="child.creditDueDate"
+                          type="date"
+                          placeholder="选择日期"
+                          value-format="yyyy-MM-dd"
+                        />
+                      </el-form-item>
+                    </el-col>
+                    <el-col v-if="child.otherSign === 0" :span="5" :offset="2">
+                      <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="8">
+                      <el-input v-model="child.name" placeholder="请输入其他文件名称" />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="6" :offset="1">
+                      <el-date-picker
+                        v-if="child.name"
+                        v-model="child.creditDueDate"
+                        type="date"
+                        placeholder="选择日期"
+                        value-format="yyyy-MM-dd"
+                      />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="4" :offset="2">
+                      <el-input-number v-if="child.name" v-model="child.num" :min="1" label="份数" />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="2" :offset="1">
+                      <el-button type="primary" icon="el-icon-delete" @click="deleteOther(item, child.uid)">删除</el-button>
+                    </el-col>
+                  </el-row>
+                </div>
                 <el-row>
                   <el-col :span="24">
                     <el-button type="primary" icon="el-icon-plus" @click="addOther(item)">添加其他</el-button>
                   </el-col>
                 </el-row>
+                <!--                  <el-row v-for="(child, indexOfChild) in item.children" :key="child.uid" style="margin-bottom: 20px;">-->
+                <!--                    <el-col v-if="child.otherSign === 0" :span="8">-->
+                <!--                      <el-checkbox v-model="child.checked" :label="child.name" border />-->
+                <!--                    </el-col>-->
+                <!--                    <el-form-item-->
+                <!--                      v-if="child.otherSign === 0 && child.checked && child.hasCreditDueDate"-->
+                <!--                      :prop="'fileList.'+ arr +'.children.'+ indexOfChild +'.creditDueDate'"-->
+                <!--                      :rules="{-->
+                <!--                        required: true, message: '到期日不能为空', trigger: 'change'-->
+                <!--                      }"-->
+                <!--                    >-->
+                <!--                      <el-col :span="7">-->
+                <!--                        <el-date-picker-->
+                <!--                          v-if="child.checked && child.hasCreditDueDate"-->
+                <!--                          v-model="addForm.fileList[arr].children[indexOfChild].creditDueDate"-->
+                <!--                          type="date"-->
+                <!--                          placeholder="选择日期"-->
+                <!--                          value-format="yyyy-MM-dd"-->
+                <!--                        />-->
+                <!--                      </el-col>-->
+                <!--                    </el-form-item>-->
+                <!--                    <el-col v-if="child.otherSign === 0" :span="5" :offset="2">-->
+                <!--                      <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />-->
+                <!--                    </el-col>-->
+                <!--                    &lt;!&ndash;分割线&ndash;&gt;-->
               </el-collapse-item>
+              <!--              </el-form>-->
             </el-collapse>
           </el-col>
         </el-row>
       </el-form>
+
+      <!--                <el-row v-for="child in item.children.filter(i => i.otherSign === 0)" :key="child.uid" style="margin-bottom: 20px;">-->
+      <!--                  <el-col :span="8">-->
+      <!--                    <el-checkbox v-model="child.checked" :label="child.name" border />-->
+      <!--                  </el-col>-->
+      <!--                  <el-form-item-->
+      <!--                    :prop="'addForm.fileList.' + arr + '.' + child.index()"-->
+      <!--                    :rules="{-->
+      <!--                      required: true, message: '到期日不能为空', trigger: 'blur'-->
+      <!--                    }"-->
+      <!--                  />-->
+      <!--                  <el-col v-if="child.hasCreditDueDate" :span="7">-->
+      <!--                    <el-date-picker-->
+      <!--                      v-if="child.checked"-->
+      <!--                      v-model="child.creditDueDate"-->
+      <!--                      type="date"-->
+      <!--                      placeholder="选择日期"-->
+      <!--                      value-format="yyyy-MM-dd"-->
+      <!--                    />-->
+      <!--                  </el-col>-->
+      <!--                  <el-col :span="5" :offset="2">-->
+      <!--                    <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />-->
+      <!--                  </el-col>-->
+      <!--                </el-row>-->
+      <!--                <el-row v-for="other in item.children.filter(i => i.otherSign === 1)" :key="other.uid" style="margin-bottom: 20px">-->
+      <!--                  <el-col :span="8">-->
+      <!--                    <el-input v-model="other.name" placeholder="请输入其他文件名称" />-->
+      <!--                  </el-col>-->
+      <!--                  <el-col :span="6" :offset="1">-->
+      <!--                    <el-date-picker-->
+      <!--                      v-if="other.name"-->
+      <!--                      v-model="other.creditDueDate"-->
+      <!--                      type="date"-->
+      <!--                      placeholder="选择日期"-->
+      <!--                      value-format="yyyy-MM-dd"-->
+      <!--                    />-->
+      <!--                  </el-col>-->
+      <!--                  <el-col :span="4" :offset="2">-->
+      <!--                    <el-input-number v-if="other.name" v-model="other.num" :min="1" label="份数" />-->
+      <!--                  </el-col>-->
+      <!--                  <el-col :span="2" :offset="1">-->
+      <!--                    <el-button type="primary" icon="el-icon-delete" @click="deleteOther(item, other.uid)">删除</el-button>-->
+      <!--                  </el-col>-->
+      <!--                </el-row>-->
       <template #footer>
         <div class="dialog-footer">
           <el-button @click.native="addFormVisible = false">取消</el-button>
@@ -323,19 +412,19 @@
       :close-on-click-modal="false"
       @close="onCloseEditForm"
     >
-      <el-form ref="editForm" :model="editForm.record" label-width="150px" label-position="left" :rules="editFormRules">
-        <el-form-item prop="recordUserName" label="档案用户姓名">
+      <el-form ref="editForm" :model="editForm" label-width="150px" label-position="left" :rules="editFormRules">
+        <el-form-item prop="record.recordUserName" label="档案用户姓名">
           <el-input v-model="editForm.record.recordUserName" auto-complete="off" />
         </el-form-item>
-        <el-form-item label="客户内码" prop="recordUserInCode">
+        <el-form-item label="客户内码" prop="record.recordUserInCode">
           <el-input v-model="editForm.record.recordUserInCode" auto-complete="off" />
         </el-form-item>
 
-        <el-form-item label="客户码" prop="recordUserCode">
+        <el-form-item label="客户码" prop="record.recordUserCode">
           <el-input v-model="editForm.record.recordUserCode" auto-complete="off" />
         </el-form-item>
 
-        <el-form-item label="档案归属支行" prop="managerDepartmentId">
+        <el-form-item label="档案归属支行" prop="record.managerDepartmentId">
           <treeselect
             v-model="editForm.record.managerDepartmentId"
             :multiple="false"
@@ -349,7 +438,7 @@
           />
         </el-form-item>
 
-        <el-form-item label="档案归属客户经理" prop="managerUserId">
+        <el-form-item label="档案归属客户经理" prop="record.managerUserId">
           <el-select v-model="editForm.record.managerUserId" placeholder="请选择">
             <el-option
               v-for="item in userList"
@@ -363,13 +452,13 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="档案类型" prop="recordType">
+        <el-form-item label="档案类型" prop="record.recordType">
           <el-radio-group v-model="editForm.record.recordType" @change="editRadioChange">
             <el-radio v-for="item in recordTypeList" :key="item.id" :label="item.id">{{ item.recordTypeName }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="授信到期日" prop="creditDueDate">
+        <el-form-item label="授信到期日" prop="record.creditDueDate">
           <el-date-picker
             v-model="editForm.record.creditDueDate"
             type="date"
@@ -387,11 +476,17 @@
                   <span class="collapse-title">{{ item.name }} {{ item.remarks ? '-' + item.remarks : '' }} <el-button style="float: right" size="large" type="text" @click.stop="addRecordFileType(item, editForm.fileList, arr)">添加</el-button></span>
                 </template>
                 <el-row style="margin-bottom: 20px">
-                  <el-col :span="4">
-                    <span>备注项:</span>
-                  </el-col>
-                  <el-col :span="4">
-                    <el-input v-model="item.remarks" auto-complete="off" />
+                  <el-col v-if="item.hasContractNo" :span="8">
+                    <el-form-item
+                      v-if="item.hasContractNo && existsCheckedFile(item.children)"
+                      label="合同号"
+                      :prop="'fileList.' + arr + '.remarks'"
+                      :rules="{
+                        required: true, message: '合同号不能为空', trigger: 'blur'
+                      }"
+                    >
+                      <el-input v-model="item.remarks" auto-complete="off" />
+                    </el-form-item>
                   </el-col>
                   <el-col :span="4" style="margin-left: 30px">
                     <el-button type="primary" icon="el-icon-delete" @click.stop="delRecordFileType(editForm.fileList, arr)">删除当前文件类型</el-button>
@@ -412,50 +507,101 @@
                     />
                   </el-col>
                 </el-row>
-                <el-row v-for="child in item.children.filter(i => i.otherSign === 0)" :key="child.uid" style="margin-bottom: 20px;">
-                  <el-col :span="8">
-                    <el-checkbox v-model="child.checked" :label="child.name" border />
-                  </el-col>
-                  <el-col :span="7">
-                    <el-date-picker
-                      v-if="child.checked"
-                      v-model="child.creditDueDate"
-                      type="date"
-                      size="mini"
-                      placeholder="选择日期"
-                      value-format="yyyy-MM-dd"
-                    />
-                  </el-col>
-                  <el-col :span="5" :offset="2">
-                    <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />
-                  </el-col>
-                </el-row>
-                <el-row v-for="other in item.children.filter(i => i.otherSign === 1)" :key="other.guid" style="margin-bottom: 20px">
-                  <el-col :span="8">
-                    <el-input v-model="other.name" placeholder="请输入其他文件名称" />
-                  </el-col>
-                  <el-col :span="6" :offset="1">
-                    <el-date-picker
-                      v-if="other.name"
-                      v-model="other.creditDueDate"
-                      type="date"
-                      size="mini"
-                      placeholder="选择日期"
-                      value-format="yyyy-MM-dd"
-                    />
-                  </el-col>
-                  <el-col :span="4" :offset="2">
-                    <el-input-number v-if="other.name" v-model="other.num" :min="1" label="份数" />
-                  </el-col>
-                  <el-col :span="2" :offset="1">
-                    <el-button type="primary" icon="el-icon-delete" @click="deleteOther(item, other.uid)">删除</el-button>
-                  </el-col>
-                </el-row>
+                <div v-for="(child, indexOfChild) in item.children" :key="child.uid">
+                  <el-row style="margin-bottom: 20px">
+                    <el-col v-if="child.otherSign === 0" :span="8">
+                      <el-checkbox v-model="child.checked" :label="child.name" border />
+                    </el-col>
+                    <el-col :span="7">
+                      <el-form-item
+                        v-if="child.otherSign === 0 && child.checked && child.hasCreditDueDate"
+                        label-width="0px"
+                        :prop="'fileList.'+ arr +'.children.'+ indexOfChild +'.creditDueDate'"
+                        :rules="{
+                          required: true, message: '到期日不能为空', trigger: 'blur'
+                        }"
+                      >
+                        <el-date-picker
+                          v-if="child.checked && child.hasCreditDueDate"
+                          v-model="child.creditDueDate"
+                          type="date"
+                          placeholder="选择日期"
+                          value-format="yyyy-MM-dd"
+                        />
+                      </el-form-item>
+                    </el-col>
+                    <el-col v-if="child.otherSign === 0" :span="5" :offset="2">
+                      <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="8">
+                      <el-input v-model="child.name" placeholder="请输入其他文件名称" />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="6" :offset="1">
+                      <el-date-picker
+                        v-if="child.name"
+                        v-model="child.creditDueDate"
+                        type="date"
+                        placeholder="选择日期"
+                        value-format="yyyy-MM-dd"
+                      />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="4" :offset="2">
+                      <el-input-number v-if="child.name" v-model="child.num" :min="1" label="份数" />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="2" :offset="1">
+                      <el-button type="primary" icon="el-icon-delete" @click="deleteOther(item, child.uid)">删除</el-button>
+                    </el-col>
+                  </el-row>
+                </div>
                 <el-row>
                   <el-col :span="24">
                     <el-button type="primary" icon="el-icon-plus" @click="addOther(item)">添加其他</el-button>
                   </el-col>
                 </el-row>
+                <!--                <el-row v-for="child in item.children.filter(i => i.otherSign === 0)" :key="child.uid" style="margin-bottom: 20px;">-->
+                <!--                  <el-col :span="8">-->
+                <!--                    <el-checkbox v-model="child.checked" :label="child.name" border />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="7">-->
+                <!--                    <el-date-picker-->
+                <!--                      v-if="child.checked"-->
+                <!--                      v-model="child.creditDueDate"-->
+                <!--                      type="date"-->
+                <!--                      size="mini"-->
+                <!--                      placeholder="选择日期"-->
+                <!--                      value-format="yyyy-MM-dd"-->
+                <!--                    />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="5" :offset="2">-->
+                <!--                    <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />-->
+                <!--                  </el-col>-->
+                <!--                </el-row>-->
+                <!--                <el-row v-for="other in item.children.filter(i => i.otherSign === 1)" :key="other.guid" style="margin-bottom: 20px">-->
+                <!--                  <el-col :span="8">-->
+                <!--                    <el-input v-model="other.name" placeholder="请输入其他文件名称" />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="6" :offset="1">-->
+                <!--                    <el-date-picker-->
+                <!--                      v-if="other.name"-->
+                <!--                      v-model="other.creditDueDate"-->
+                <!--                      type="date"-->
+                <!--                      size="mini"-->
+                <!--                      placeholder="选择日期"-->
+                <!--                      value-format="yyyy-MM-dd"-->
+                <!--                    />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="4" :offset="2">-->
+                <!--                    <el-input-number v-if="other.name" v-model="other.num" :min="1" label="份数" />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="2" :offset="1">-->
+                <!--                    <el-button type="primary" icon="el-icon-delete" @click="deleteOther(item, other.uid)">删除</el-button>-->
+                <!--                  </el-col>-->
+                <!--                </el-row>-->
+                <!--                <el-row>-->
+                <!--                  <el-col :span="24">-->
+                <!--                    <el-button type="primary" icon="el-icon-plus" @click="addOther(item)">添加其他</el-button>-->
+                <!--                  </el-col>-->
+                <!--                </el-row>-->
               </el-collapse-item>
             </el-collapse>
           </el-col>
@@ -554,7 +700,7 @@
             <el-col :span="7" style="margin-bottom: 20px;margin-top: 20px"><span>{{ recordFile.name }}</span></el-col>
             <el-col :span="7" style="margin-bottom: 20px;margin-top: 20px"><span>{{ recordFile.creditDueDate ? recordFile.creditDueDate : '无过期时间' }}</span></el-col>
             <el-col :span="4" style="margin-bottom: 20px;margin-top: 20px"><span>{{ 'x' + recordFile.num }}</span></el-col>
-            <el-col :span="4" style="margin-bottom: 20px;margin-top: 20px"><span>{{ recordFile.handOverSign ? '已移交' : '未移交' }}</span></el-col>
+            <el-col :span="4" style="margin-bottom: 20px;margin-top: 20px"><span>{{ recordFile.handOverSign === 0 ? '未移交' : recordFile.handOverSign === 1 ? '已移交' : recordFile.handOverSign === 2 ? '待更改' : '借阅中' }}</span></el-col>
           </el-row>
         </el-card>
       </el-row>
@@ -655,79 +801,135 @@
       <el-row>
         <el-col :span="24">
           <el-collapse>
-            <el-collapse-item v-for="(item, arr) in recordAdditionInfo.recordFileTypeList" :key="item.uid" :name="item.uid">
-              <template slot="title">
-                <span class="collapse-title">{{ item.name }} {{ item.remarks ? '-' + item.remarks : '' }}
-                  <el-button
-                    style="float: right"
-                    size="large"
-                    type="text"
-                    @click.stop="addRecordFileType(item, recordAdditionInfo.recordFileTypeList, arr)"
-                  >添加</el-button></span>
-              </template>
-              <el-row style="margin-bottom: 20px">
-                <el-col :span="4">
-                  <span>备注项:</span>
-                </el-col>
-                <el-col :span="4">
-                  <el-input v-model="item.remarks" auto-complete="off" />
-                </el-col>
-                <el-col :span="4" style="margin-left: 30px">
-                  <el-button type="primary" icon="el-icon-delete" @click.stop="delRecordFileType(recordAdditionInfo.recordFileTypeList, arr)">删除当前文件类型</el-button>
-                </el-col>
-              </el-row>
-              <el-row v-for="child in item.children.filter(i => i.otherSign === 0)" :key="child.uid" style="margin-bottom: 20px;">
-                <el-col :span="4">
-                  <el-checkbox v-model="child.checked" :label="child.name" border />
-                </el-col>
-                <el-col :span="7">
-                  <el-date-picker
-                    v-if="child.checked"
-                    v-model="child.creditDueDate"
-                    type="date"
-                    size="mini"
-                    placeholder="选择日期"
-                    value-format="yyyy-MM-dd"
-                  />
-                </el-col>
-                <el-col :span="5" :offset="2">
-                  <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />
-                </el-col>
-              </el-row>
-              <el-row v-for="other in item.children.filter(i => i.otherSign === 1)" :key="other.guid" style="margin-bottom: 20px">
-                <el-col :span="3">
-                  <el-input v-model="other.name" placeholder="请输入其他文件名称" />
-                </el-col>
-                <el-col :span="6" :offset="1">
-                  <el-date-picker
-                    v-if="other.name"
-                    v-model="other.creditDueDate"
-                    type="date"
-                    size="mini"
-                    placeholder="选择日期"
-                    value-format="yyyy-MM-dd"
-                  />
-                </el-col>
-                <el-col :span="4" :offset="2">
-                  <el-input-number v-if="other.name" v-model="other.num" :min="1" label="份数" />
-                </el-col>
-                <el-col :span="2" :offset="1">
-                  <el-button type="primary" icon="el-icon-delete" @click="deleteOther(item, other.uid)">删除</el-button>
-                </el-col>
-              </el-row>
-              <el-row>
-                <el-col :span="24">
-                  <el-button type="primary" icon="el-icon-plus" @click="addOther(item)">添加其他</el-button>
-                </el-col>
-              </el-row>
-            </el-collapse-item>
+            <el-form ref="additionalForm" :model="recordAdditionInfo" label-position="left">
+              <el-collapse-item v-for="(item, arr) in recordAdditionInfo.recordFileTypeList" :key="item.uid" :name="item.uid">
+                <template slot="title">
+                  <span class="collapse-title">{{ item.name }} {{ item.remarks ? '-' + item.remarks : '' }}
+                    <el-button
+                      style="float: right"
+                      size="large"
+                      type="text"
+                      @click.stop="addRecordFileType(item, recordAdditionInfo.recordFileTypeList, arr)"
+                    >添加</el-button></span>
+                </template>
+                <el-row style="margin-bottom: 20px">
+                  <el-col v-if="item.checkedRecordFileTypeId === 0 && item.hasContractNo && existsCheckedFile(item.children)" :span="8">
+                    <el-form-item
+                      v-model="item.remarks"
+                      label-width="150px"
+                      label="合同号"
+
+                      :prop="'recordFileTypeList.' + arr + '.remarks'"
+                      :rules="{
+                        required: true, message: '合同号不能为空', trigger: 'blur'
+                      }"
+                    >
+                      <el-input v-model="item.remarks" auto-complete="off" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="4" style="margin-left: 30px">
+                    <el-button type="primary" icon="el-icon-delete" @click.stop="delRecordFileType(recordAdditionInfo.recordFileTypeList, arr)">删除当前文件类型</el-button>
+                  </el-col>
+                </el-row>
+                <div v-for="(child, indexOfChild) in item.children" :key="child.uid">
+                  <el-row style="margin-bottom: 20px">
+                    <el-col v-if="child.otherSign === 0" :span="8">
+                      <el-checkbox v-model="child.checked" :label="child.name" border />
+                    </el-col>
+                    <el-col :span="7">
+                      <el-form-item
+                        v-if="child.otherSign === 0 && child.checked && child.hasCreditDueDate"
+                        label-width="0px"
+                        :prop="'recordFileTypeList.'+ arr +'.children.'+ indexOfChild +'.creditDueDate'"
+                        :rules="{
+                          required: true, message: '合同号不能为空', trigger: 'blur'
+                        }"
+                      >
+                        <el-date-picker
+                          v-if="child.checked && child.hasCreditDueDate"
+                          v-model="child.creditDueDate"
+                          type="date"
+                          placeholder="选择日期"
+                          value-format="yyyy-MM-dd"
+                        />
+                      </el-form-item>
+                    </el-col>
+                    <el-col v-if="child.otherSign === 0" :span="5" :offset="2">
+                      <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="8">
+                      <el-input v-model="child.name" placeholder="请输入其他文件名称" />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="6" :offset="1">
+                      <el-date-picker
+                        v-if="child.name"
+                        v-model="child.creditDueDate"
+                        type="date"
+                        placeholder="选择日期"
+                        value-format="yyyy-MM-dd"
+                      />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="4" :offset="2">
+                      <el-input-number v-if="child.name" v-model="child.num" :min="1" label="份数" />
+                    </el-col>
+                    <el-col v-if="child.otherSign === 1" :span="2" :offset="1">
+                      <el-button type="primary" icon="el-icon-delete" @click="deleteOther(item, child.uid)">删除</el-button>
+                    </el-col>
+                  </el-row>
+                </div>
+                <!--                <el-row v-for="child in item.children.filter(i => i.otherSign === 0)" :key="child.uid" style="margin-bottom: 20px;">-->
+                <!--                  <el-col :span="4">-->
+                <!--                    <el-checkbox v-model="child.checked" :label="child.name" border />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="7">-->
+                <!--                    <el-date-picker-->
+                <!--                      v-if="child.checked"-->
+                <!--                      v-model="child.creditDueDate"-->
+                <!--                      type="date"-->
+                <!--                      size="mini"-->
+                <!--                      placeholder="选择日期"-->
+                <!--                      value-format="yyyy-MM-dd"-->
+                <!--                    />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="5" :offset="2">-->
+                <!--                    <el-input-number v-if="child.checked" v-model="child.num" :min="1" label="份数" />-->
+                <!--                  </el-col>-->
+                <!--                </el-row>-->
+                <!--                <el-row v-for="other in item.children.filter(i => i.otherSign === 1)" :key="other.guid" style="margin-bottom: 20px">-->
+                <!--                  <el-col :span="3">-->
+                <!--                    <el-input v-model="other.name" placeholder="请输入其他文件名称" />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="6" :offset="1">-->
+                <!--                    <el-date-picker-->
+                <!--                      v-if="other.name"-->
+                <!--                      v-model="other.creditDueDate"-->
+                <!--                      type="date"-->
+                <!--                      size="mini"-->
+                <!--                      placeholder="选择日期"-->
+                <!--                      value-format="yyyy-MM-dd"-->
+                <!--                    />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="4" :offset="2">-->
+                <!--                    <el-input-number v-if="other.name" v-model="other.num" :min="1" label="份数" />-->
+                <!--                  </el-col>-->
+                <!--                  <el-col :span="2" :offset="1">-->
+                <!--                    <el-button type="primary" icon="el-icon-delete" @click="deleteOther(item, other.uid)">删除</el-button>-->
+                <!--                  </el-col>-->
+                <!--                </el-row>-->
+                <el-row>
+                  <el-col :span="24">
+                    <el-button type="primary" icon="el-icon-plus" @click="addOther(item)">添加其他</el-button>
+                  </el-col>
+                </el-row>
+              </el-collapse-item>
+            </el-form>
           </el-collapse>
         </el-col>
       </el-row>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click.native="visibleAdditionalPage = false">取消</el-button>
-          <confirm-button type="submit" :loading="addAdditionVisible" @click="addAdditionInfo" />
+          <confirm-button type="submit" :validate="additionalValidate" :loading="addAdditionVisible" @click="addAdditionInfo" />
         </div>
       </template>
     </el-dialog>
@@ -894,13 +1096,15 @@ export default {
       editFormVisible: false, // 编辑界面是否显示
       editLoading: false,
       editFormRules: {
-        recordUserName: [{ required: true, message: '请输入档案用户姓名', trigger: 'blur' }],
-        recordUserInCode: [{ required: true, message: '请输入客户内码', trigger: 'blur' }],
-        recordUserCode: [{ required: true, message: '请输入客户码', trigger: 'blur' }],
-        managerDepartmentId: [{ required: true, message: '请输入档案归属部门', trigger: 'blur' }],
-        managerUserId: [{ required: true, message: '请输入档案归属客户经理', trigger: 'blur' }],
-        recordType: [{ required: true, message: '请选择档案类型', trigger: 'change' }],
-        creditDueDate: [{ required: true, message: '请输入授信到期日', trigger: 'change' }]
+        record: {
+          recordUserName: [{ required: true, message: '请输入档案用户姓名', trigger: 'blur' }],
+          recordUserInCode: [{ required: true, message: '请输入客户内码', trigger: 'blur' }],
+          recordUserCode: [{ required: true, message: '请输入客户码', trigger: 'blur' }],
+          managerDepartmentId: [{ required: true, message: '请输入档案归属部门', trigger: 'blur' }],
+          managerUserId: [{ required: true, message: '请输入档案归属客户经理', trigger: 'blur' }],
+          recordType: [{ required: true, message: '请选择档案类型', trigger: 'change' }],
+          creditDueDate: [{ required: true, message: '请输入授信到期日', trigger: 'change' }]
+        }
       },
       // 编辑界面数据
       editForm: {
@@ -919,13 +1123,15 @@ export default {
       addFormVisible: false, // 新增界面是否显示
       addLoading: false,
       addFormRules: {
-        recordUserName: [{ required: true, message: '请输入档案用户姓名', trigger: 'blur' }],
-        recordUserInCode: [{ required: true, message: '请输入客户内码', trigger: 'blur' }],
-        recordUserCode: [{ required: true, message: '请输入客户码', trigger: 'blur' }],
-        managerDepartmentId: [{ required: true, message: '请输入档案归属部门', trigger: 'blur' }],
-        managerUserId: [{ required: true, message: '请输入档案归属客户经理', trigger: 'blur' }],
-        recordType: [{ required: true, message: '请选择档案类型', trigger: 'change' }],
-        creditDueDate: [{ required: true, message: '请输入授信到期日', trigger: 'change' }]
+        record: {
+          recordUserName: [{ required: true, message: '请输入档案用户姓名', trigger: 'blur' }],
+          recordUserInCode: [{ required: true, message: '请输入客户内码', trigger: 'blur' }],
+          recordUserCode: [{ required: true, message: '请输入客户码', trigger: 'blur' }],
+          managerDepartmentId: [{ required: true, message: '请输入档案归属部门', trigger: 'blur' }],
+          managerUserId: [{ required: true, message: '请输入档案归属客户经理', trigger: 'blur' }],
+          recordType: [{ required: true, message: '请选择档案类型', trigger: 'change' }],
+          creditDueDate: [{ required: true, message: '请输入授信到期日', trigger: 'change' }]
+        }
       },
       // 新增界面数据
       addForm: {
@@ -961,6 +1167,15 @@ export default {
     this.getRecordTypeList()
   },
   methods: {
+    existsCheckedFile: function(data) {
+      let sign = false
+      data.forEach(i => {
+        if (i.checked) {
+          sign = true
+        }
+      })
+      return sign
+    },
     changeDataSub: async function() {
       this.changeDataSubmit = true
       const param = {
@@ -1011,7 +1226,9 @@ export default {
     },
     unionSetDate: function(event, item) {
       item.children.forEach(i => {
-        i.creditDueDate = event
+        if (i.hasCreditDueDate && i.checked) {
+          i.creditDueDate = event
+        }
       })
     },
     unionDateSet: function(name) {
@@ -1117,6 +1334,13 @@ export default {
         }
       }
     },
+    additionalValidate: function() {
+      let validate = false
+      this.$refs.additionalForm.validate(valid => {
+        validate = valid
+      })
+      return validate
+    },
     addAdditionInfo: async function() {
       this.addAdditionVisible = true
       const obj = _.cloneDeep(this.recordAdditionInfo)
@@ -1135,6 +1359,7 @@ export default {
         })
       }
       this.visibleAdditionalPage = false
+      await this.onGetList()
     },
 
     showAdditionPage: async function(row) {
@@ -1168,7 +1393,6 @@ export default {
       newItem.children.forEach(item => {
         item.checedRecordFileId = 0
       })
-      console.log(newItem)
       parent.splice(index + 1, 0, newItem)
     },
     // 删除文件类型
@@ -1195,6 +1419,8 @@ export default {
         return '在库'
       } else if (num === 2) {
         return '借阅中'
+      } else if (num === 3) {
+        return '移交被拒绝'
       }
     },
     borrowStatus: function(statu) {
@@ -1336,9 +1562,9 @@ export default {
           message: this.$t('admin.updateOk'),
           type: 'success'
         })
-        this.$refs['editForm'].resetFields()
-        this.editForm.fileList = []
+        // this.editForm.fileList = []
         this.editFormVisible = false
+        this.$refs['editForm'].resetFields()
         await this.onGetList()
       } else {
         this.$message({
@@ -1386,7 +1612,6 @@ export default {
           type: 'success'
         })
         this.$refs['addForm'].resetFields()
-        this.addForm.fileList = []
         this.addFormVisible = false
         await this.onGetList()
       } else {

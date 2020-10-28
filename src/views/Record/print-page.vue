@@ -48,7 +48,7 @@
           <tr v-for="(recordFile, index) in item.children" :key="index">
             <td style="text-align: center;">{{ index + 1 }}</td>
             <td colspan="3" style="text-align: center;">{{ recordFile.name }}</td>
-            <td style="text-align: center;">{{ recordFile.num }}</td>
+            <td style="text-align: center;">{{ recordFile.num === 0 ? '' : recordFile.num }}</td>
             <td style="text-align: center;" />
             <td colspan="2" style="text-align: center;" />
             <td colspan="3" style="text-align: center;" />

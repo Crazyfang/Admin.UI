@@ -3,10 +3,10 @@
     <el-scrollbar class="page-component__scroll" style="height:100%;">
       <div style="height:10%;" />
       <el-card shadow="always" class="login-card" :body-style="{ padding: '0px' }">
-        <div class="title">信贷流转</div>
-        <div class="desc">信贷流转管理系统</div>
-        <!-- <div class="title">乡村振兴普惠行</div>
-        <div class="title">公议评价系统</div> -->
+        <!--        <div class="title">信贷流转</div>-->
+        <!--        <div class="desc">信贷流转管理系统</div>-->
+        <div class="title">乡村振兴普惠行</div>
+        <div class="title">公议评价系统V1.0</div>
         <el-form ref="form" :model="form" :rules="formRules" size="medium">
           <el-form-item prop="userName">
             <el-input

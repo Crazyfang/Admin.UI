@@ -57,15 +57,6 @@
       border
       style="width: 100%;"
     >
-      <el-table-column type="expand">
-        <template slot-scope="props">
-          <el-form label-position="left" inline class="demo-table-expand">
-            <el-form-item label="变更项">
-              <span>{{ props.row.originalType }}方式 调整至 {{ props.row.aimedType }}方式</span>
-            </el-form-item>
-          </el-form>
-        </template>
-      </el-table-column>
       <el-table-column prop="id" width="50" label="ID" />
       <el-table-column prop="userName" label="客户名称" width="200px" />
       <el-table-column prop="userCode" label="客户号" width="200px" />
@@ -77,6 +68,8 @@
           >{{ statusCalculate(scope.row.overSign) }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column prop="sumValue" label="合同金额(万元)" width="150px" />
+      <el-table-column prop="partialValue" label="需替换金额(万元)" width="150px" />
       <el-table-column prop="beginTime" label="设定起始时间" :formatter="formatCreatedTime" width="200px" />
       <el-table-column prop="overTime" label="结束时间" :formatter="formatCreatedTime" width="200px" />
       <el-table-column label="操作" width="240px" fixed="right">
@@ -142,32 +135,18 @@
       <el-divider />
       <el-row :gutter="20" style="margin-bottom: 20px">
         <el-col :span="12" style="text-align: center">
-          <span>目前担保方式</span>
+          <span>合同金额(万元)</span>
         </el-col>
         <el-col :span="12" style="text-align: center">
-          <span>期望担保方式</span>
+          <span>需替换金额(万元)</span>
         </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-bottom: 20px">
         <el-col :span="12" style="text-align: center">
-          <el-select v-model="addForm.originalType" placeholder="请选择">
-            <el-option
-              v-for="item in warrantOption"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
+          <el-input v-model="addForm.sumValue" placeholder="合同金额" />
         </el-col>
         <el-col :span="12" style="text-align: center">
-          <el-select v-model="addForm.aimedType" placeholder="请选择">
-            <el-option
-              v-for="item in warrantOption"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
+          <el-input v-model="addForm.partialValue" placeholder="需替换金额" />
         </el-col>
       </el-row>
       <template #footer>
@@ -222,32 +201,18 @@
       <el-divider />
       <el-row :gutter="20" style="margin-bottom: 20px">
         <el-col :span="12" style="text-align: center">
-          <span>目前担保方式</span>
+          <span>合同金额(万元)</span>
         </el-col>
         <el-col :span="12" style="text-align: center">
-          <span>期望担保方式</span>
+          <span>需替换金额(万元)</span>
         </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-bottom: 20px">
         <el-col :span="12" style="text-align: center">
-          <el-select v-model="editForm.originalType" placeholder="请选择">
-            <el-option
-              v-for="item in warrantOption"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
+          <el-input v-model="editForm.sumValue" placeholder="合同金额" />
         </el-col>
         <el-col :span="12" style="text-align: center">
-          <el-select v-model="editForm.aimedType" placeholder="请选择">
-            <el-option
-              v-for="item in warrantOption"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
+          <el-input v-model="editForm.partialValue" placeholder="需替换金额" />
         </el-col>
       </el-row>
       <template #footer>
@@ -265,7 +230,7 @@ import { formatTime } from '@/utils'
 import ConfirmButton from '@/components/ConfirmButton'
 import Pagination from '@/components/Pagination'
 import Container from '@/components/Container/index'
-import { getLoanUser, addLoanMethod, editLoanMethod, getLoanMethodPage, verifyLoanMethod, delLoanMethod } from '@/api/loan/loanmethod'
+import { getLoanMethod, addLoanMethod, editLoanMethod, getLoanMethodPage, verifyLoanMethod, delLoanMethod } from '@/api/loan/loanmethod'
 export default {
   name: 'MortgageReplacement',
   components: {
@@ -292,6 +257,9 @@ export default {
       }, {
         value: 3,
         label: '超期未完成'
+      }, {
+        value: 4,
+        label: '超期审核通过'
       }],
       pager: {},
       listLoading: false,
@@ -301,10 +269,10 @@ export default {
         userCode: '828000000',
         beginTime: '2020-08-01 11:45:15',
         countDay: 365,
-        endTime: '2021-08-01 11:45:15',
-        originalType: '信用担保',
+        overTime: '2021-08-01 11:45:15',
+        sumValue: 1000,
         overSign: 0,
-        aimedType: '抵押担保',
+        partialValue: 500,
         _loading: false
       }],
 
@@ -314,8 +282,8 @@ export default {
         userCode: '',
         beginTime: '',
         countDay: 0,
-        originalType: '',
-        aimedType: ''
+        sumValue: '',
+        partialValue: ''
       },
       addLoading: false,
 
@@ -326,21 +294,10 @@ export default {
         userCode: '',
         beginTime: '',
         countDay: 0,
-        originalType: '',
-        aimedType: ''
+        sumValue: '',
+        partialValue: ''
       },
-      editLoading: false,
-
-      warrantOption: [{
-        value: '信用担保',
-        label: '信用担保'
-      }, {
-        value: '抵押担保',
-        label: '抵押担保'
-      }, {
-        value: '保证人担保',
-        label: '保证人担保'
-      }]
+      editLoading: false
     }
   },
   mounted() {
@@ -359,7 +316,7 @@ export default {
           message: '审核成功',
           type: 'success'
         })
-        this.onGetList()
+        await this.onGetList()
       } else {
         this.$message({
           message: res.msg,
@@ -376,7 +333,7 @@ export default {
           message: '删除成功',
           type: 'success'
         })
-        this.onGetList()
+        await this.onGetList()
       } else {
         this.$message({
           message: res.msg,
@@ -386,7 +343,7 @@ export default {
     },
     // 编辑按钮点击
     editButtonClick: async function(index, row) {
-      const res = await getLoanUser({ id: row.id })
+      const res = await getLoanMethod({ id: row.id })
 
       if (res.success) {
         this.editForm = res.data
@@ -413,7 +370,7 @@ export default {
         })
         this.editVisible = false
         this.editForm = this.$options.data().editForm
-        this.onGetList()
+        await this.onGetList()
       } else {
         this.$message({
           message: res.msg,
@@ -436,7 +393,7 @@ export default {
         })
         this.addVisible = false
         this.addForm = this.$options.data().addForm
-        this.onGetList()
+        await this.onGetList()
       } else {
         this.$message({
           message: res.msg,
@@ -483,8 +440,10 @@ export default {
         return '完成目标'
       } else if (type === 2) {
         return '审核通过'
+      } else if (type === 3) {
+        return '超期完成'
       } else {
-        return '超期未完成'
+        return '超期审核完成'
       }
     }
   }

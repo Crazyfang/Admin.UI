@@ -1,3 +1,3 @@
 export default {
-  title: '信贷存证系统'
+  title: '公议评价系统'
 }
