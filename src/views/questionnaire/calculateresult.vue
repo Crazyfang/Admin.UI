@@ -132,7 +132,7 @@ export default {
 
         const res = await generateCreditDetailXlsx(data)
         if (res.success) {
-          this.$alert('<a target="_blank" href="/api/questionnaire/household/DownloadCreditCollectFile?fileName=' + res.data + '">下载文件<a>', '下载界面', {
+          await this.$alert('<a target="_blank" href="/api/questionnaire/household/DownloadCreditCollectFile?fileName=' + res.data + '">下载文件<a>', '下载界面', {
             dangerouslyUseHTMLString: true
           })
         } else {

@@ -122,7 +122,7 @@
       @select="onSelect"
     >
       <el-table-column type="selection" width="50" />
-      <el-table-column prop="id" width="50" label="ID" />
+      <el-table-column prop="id" width="100" label="ID" />
       <el-table-column prop="recordId" label="档案编号" width="150px" />
       <el-table-column prop="status" label="档案状态" width="120px">
         <template slot-scope="scope">
@@ -1230,6 +1230,7 @@ export default {
           i.creditDueDate = event
         }
       })
+      console.log(item)
     },
     unionDateSet: function(name) {
       return name === '权证类' || name === '贷款业务要件类' || name === '承兑业务要件类' || name === '贴现业务要件类' || name === '保函业务要件类'
