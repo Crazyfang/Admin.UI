@@ -683,7 +683,7 @@
         </el-col>
       </el-row>
       <el-divider content-position="left">档案文件</el-divider>
-      <el-row v-for="item in usedRecordFileType" :key="item.id" style="margin: 20px;">
+      <el-row v-for="item in usedRecordFileType" :key="item.uid" style="margin: 20px;">
         <el-card class="box-card">
           <div slot="header">
             <span>{{ item.name }}{{ item.remarks ? '-' + item.remarks:'' }}</span>

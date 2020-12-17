@@ -189,9 +189,6 @@
             <el-form-item
               prop="ladingInquireDate"
               label="提单查询日期"
-              :rules="{
-                required: true, message: '提单查询日期不能为空', trigger: 'blur'
-              }"
             >
               <el-date-picker
                 v-model="contractForm.ladingInquireDate"
@@ -369,7 +366,7 @@
                 <template v-if="item.pictureList.length !== 0" slot="prepend"><i class="el-icon-success" /></template>
               </el-input>
             </el-col>
-            <el-col :span="8" offset="2">
+            <el-col :span="8" :offset="2">
               <el-switch
                 v-model="item.overSign"
                 style="display: block"
@@ -424,24 +421,34 @@
           append-to-body
           @closed="closePicDialogFunc"
         >
-          <el-upload
-            class="avatar-uploader"
-            action="/api/antimoney/file/FileImageUpload"
-            list-type="picture-card"
-            :headers="token"
-            :on-success=" (response, file, fileList) => onImageSuccess(response)"
-            :file-list="pictureFileList"
-            :on-preview="addImageToArray"
-            :on-remove="removePicture"
-            style="display: inline-block;"
-          >
-            <i class="el-icon-plus" />
-          </el-upload>
-          <el-image-viewer
-            v-if="showViewer"
-            :on-close="()=>{ showViewer = false }"
-            :url-list="imgList"
-          />
+          <el-row>
+            <el-col :span="24" style="margin-bottom: 10px">
+              <el-button type="primary" @click="submitUpload">上传至服务器</el-button>
+            </el-col>
+            <el-col :span="24">
+              <el-upload
+                class="avatar-uploader"
+                action="/api/antimoney/file/FileImageUpload"
+                list-type="picture-card"
+                multiple
+                :headers="token"
+                :auto-upload="false"
+                :file-list="pictureFileList"
+                :on-preview="addImageToArray"
+                :on-remove="removePicture"
+                :on-change="handleChange"
+                style="display: inline-block;"
+              >
+                <i class="el-icon-plus" />
+              </el-upload>
+              <el-image-viewer
+                v-if="showViewer"
+                :on-close="()=>{ showViewer = false }"
+                :url-list="imgList"
+              />
+            </el-col>
+          </el-row>
+
           <!--          <el-button v-if="item.filePath" type="primary" icon="el-icon-zoom-in" style="margin-left: 10px" @click="addImageToArray(item)">查看图片</el-button>-->
         </el-dialog>
         <template #footer>
@@ -519,11 +526,14 @@ import {
 } from '@/api/antimoney/contract'
 import { addFile } from '@/api/antimoney/file'
 import { getCurrencyList } from '@/api/antimoney/currency'
+
+const axios = require('axios')
 export default {
   name: 'Company',
   components: { ConfirmButton, Container, Pagination, 'el-image-viewer': () => import('element-ui/packages/image/src/image-viewer') },
   data() {
     return {
+      tempList: [],
       paymentNatureOption: [{
         value: '货到',
         label: '货到'
@@ -708,6 +718,35 @@ export default {
     this.getCurrencyData()
   },
   methods: {
+    async handleChange(file, fileList) {
+      const existFile = fileList.slice(0, fileList.length - 1).find(f => f.name === file.name)
+      if (existFile) {
+        this.$message.error('当前文件已经存在!')
+        fileList.pop()
+      }
+      // TODO 精简代码，目前的pictureList可以跟tempList合并，只需要操作一个即可，为了上线，先不进行修改
+      this.pictureFileList = fileList
+    },
+    async submitUpload() {
+      const formData = new FormData() //  用FormData存放上传文件
+      this.pictureFileList.forEach(file => {
+        // console.log(file)
+        if (file.status && file.status === 'ready') {
+          formData.append('file', file.raw)
+        }
+      })
+      // const formData = new FormData()
+      // formData.append('file', param.file)
+      // importCase是上传接口
+      axios({
+        method: 'post',
+        headers: this.token,
+        url: '/api/antimoney/file/FileImageUpload',
+        data: formData
+      }).then(res => this.onImageSuccess(res.data))
+      // const res = await uploadPicture(formData)
+      // this.onImageSuccess(res)
+    },
     // 下载合同文件
     downloadContractFile: async function() {
       const data = {
@@ -733,13 +772,31 @@ export default {
     },
     openUploadDialog: function(item) {
       this.pictureFileList = item.pictureList
+      this.tempList = item.pictureList
       this.pictureDialogVisible = true
     },
     // 图片删除
     removePicture: function(file, fileList) {
-      const index = this.pictureFileList.findIndex(i => i.id === file.id)
-      index > -1 && this.pictureFileList.splice(index, 1)
-      console.log(this.fileList)
+      const index = this.pictureFileList.findIndex(i => i.uid === file.uid)
+      if (this.pictureFileList === this.tempList) {
+        index > -1 && this.pictureFileList.splice(index, 1)
+      } else {
+        if (index > -1) {
+          const item = this.pictureFileList[index]
+          const tempIndex = this.tempList.findIndex(i => i.url === item.url)
+          tempIndex > -1 && this.tempList.splice(tempIndex, 1)
+          this.pictureFileList.splice(index, 1)
+        }
+      }
+      // if (index > -1) {
+      //   const item = this.pictureFileList[index]
+      //   const tempIndex = this.tempList.findIndex(i => i.url === item.url)
+      //   tempIndex > -1 && this.tempList.splice(tempIndex, 1)
+      //   this.pictureFileList.splice(index, 1)
+      // }
+
+      // console.log(this.fileList)
+      // this.pictureFileList = fileList
     },
     // 获取币种数据
     getCurrencyData: async function() {
@@ -778,11 +835,26 @@ export default {
     },
     addImageToArray: function(item) {
       this.imgList = []
+      let list_index = 0
+      let sign = false
       // this.imgList.push('/upload/antimoney/' + item.filePath)
-      this.imgList.push(item.url)
+      this.pictureFileList.forEach((i, index) => {
+        if (item.url === i.url) {
+          list_index = index
+          sign = true
+        }
+        if (sign) {
+          this.imgList.push(i.url)
+        }
+      })
+      this.pictureFileList.forEach((i, index) => {
+        if (index < list_index) {
+          this.imgList.push(i.url)
+        }
+      })
       this.showViewer = true
     },
-    onImageSuccess(res, item) {
+    onImageSuccess(res) {
       // item.loading = false
       if (!(res && res.code === 1)) {
         if (res.msg) {
@@ -791,11 +863,32 @@ export default {
             type: 'error'
           })
         }
-        return
+      } else {
+        this.$message({
+          type: 'success',
+          message: res.msg,
+          dangerouslyUseHTMLString: true
+        })
+        this.pictureFileList.forEach(i => {
+          i.status = 'success'
+        })
+        res.data.forEach(i => {
+          this.tempList.push({ id: 0, url: 'http://154.25.8.51:9998/upload/antimoney/' + i.fileRelativePath, status: 'success', name: i.fileName })
+        })
+        // console.log(this.tempList)
+        // const uuid = require('uuid')
+        //
+        // res.data.forEach(i => {
+        //   const data = { id: 0, url: '/upload/antimoney/' + i, name: uuid.v1() + '.jpg', indexId: uuid.v1() }
+        //   this.pictureFileList.push(data)
+        // })
+        // const data = { id: 0, url: '/upload/antimoney/' + res.data, name: uuid.v1() + '.jpg', indexId: uuid.v1() }
+        // this.pictureFileList.push(data)
+        // const data = { id: 0, url: 'http://154.25.8.51:9998/upload/antimoney/' + res.data, name: '图片.jpg' }
+        // const data = { id: 0, url: '/upload/antimoney/' + res.data, name: '图片.jpg' }
+        // this.pictureFileList.push(data)
+        // item.filePath = res.data
       }
-      const data = { id: 0, url: 'http://154.25.8.51:9998/upload/antimoney/' + res.data, name: '图片.jpg' }
-      this.pictureFileList.push(data)
-      // item.filePath = res.data
     },
     contractPageCancel: async function() {
       this.contractVisible = false
@@ -909,8 +1002,6 @@ export default {
     // 查看文件
     openFileDialog: async function(id) {
       const res = await getFileList({ contractId: id })
-
-      console.log(res.data)
 
       if (res.success) {
         res.data.forEach(i => {
@@ -1164,7 +1255,7 @@ export default {
         data.forEach(l => {
           l._loading = false
         })
-        this.contractPager.total = data
+        this.contractPager.total = data.length
         this.contractVisible = true
       } else {
         this.$message({
@@ -1195,8 +1286,8 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .el-table .warning-row {
-  background: oldlace;
+  background: orange;
 }
 </style>
