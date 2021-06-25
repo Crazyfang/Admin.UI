@@ -223,8 +223,9 @@
         <el-form-item label="授信到期日" prop="record.creditDueDate">
           <el-date-picker
             v-model="addForm.record.creditDueDate"
-            type="date"
+            v-date-format
             placeholder="选择日期"
+            type="date"
             value-format="yyyy-MM-dd"
           />
         </el-form-item>
@@ -262,6 +263,7 @@
                   <el-col :span="6">
                     <el-date-picker
                       v-model="item.date"
+                      v-date-format="{obj: 'addForm.fileList', index: arr, modelName: 'date'}"
                       type="date"
                       size="mini"
                       placeholder="选择日期"
@@ -287,6 +289,7 @@
                         <el-date-picker
                           v-if="child.checked && child.hasCreditDueDate"
                           v-model="child.creditDueDate"
+                          v-date-format="{obj: 'addForm.fileList.'+ arr +'.children', index: indexOfChild, modelName: 'creditDueDate'}"
                           type="date"
                           placeholder="选择日期"
                           value-format="yyyy-MM-dd"
@@ -303,6 +306,7 @@
                       <el-date-picker
                         v-if="child.name"
                         v-model="child.creditDueDate"
+                        v-date-format="{obj: 'addForm.fileList.'+ arr +'.children', index: indexOfChild, modelName: 'creditDueDate'}"
                         type="date"
                         placeholder="选择日期"
                         value-format="yyyy-MM-dd"
@@ -461,6 +465,7 @@
         <el-form-item label="授信到期日" prop="record.creditDueDate">
           <el-date-picker
             v-model="editForm.record.creditDueDate"
+            v-date-format
             type="date"
             size="mini"
             placeholder="选择日期"
@@ -499,6 +504,7 @@
                   <el-col :span="6">
                     <el-date-picker
                       v-model="item.date"
+                      v-date-format="{obj: 'editForm.fileList', index: arr, modelName: 'date'}"
                       type="date"
                       size="mini"
                       placeholder="选择日期"
@@ -524,6 +530,7 @@
                         <el-date-picker
                           v-if="child.checked && child.hasCreditDueDate"
                           v-model="child.creditDueDate"
+                          v-date-format="{obj: 'editForm.fileList.'+ arr +'.children', index: indexOfChild, modelName: 'creditDueDate'}"
                           type="date"
                           placeholder="选择日期"
                           value-format="yyyy-MM-dd"
@@ -540,6 +547,7 @@
                       <el-date-picker
                         v-if="child.name"
                         v-model="child.creditDueDate"
+                        v-date-format="{obj: 'edotForm.fileList.'+ arr +'.children', index: indexOfChild, modelName: 'creditDueDate'}"
                         type="date"
                         placeholder="选择日期"
                         value-format="yyyy-MM-dd"
@@ -818,7 +826,6 @@
                       v-model="item.remarks"
                       label-width="150px"
                       label="合同号"
-
                       :prop="'recordFileTypeList.' + arr + '.remarks'"
                       :rules="{
                         required: true, message: '合同号不能为空', trigger: 'blur'
@@ -842,12 +849,13 @@
                         label-width="0px"
                         :prop="'recordFileTypeList.'+ arr +'.children.'+ indexOfChild +'.creditDueDate'"
                         :rules="{
-                          required: true, message: '合同号不能为空', trigger: 'blur'
+                          required: true, message: '到期日不能为空', trigger: 'blur'
                         }"
                       >
                         <el-date-picker
                           v-if="child.checked && child.hasCreditDueDate"
                           v-model="child.creditDueDate"
+                          v-date-format
                           type="date"
                           placeholder="选择日期"
                           value-format="yyyy-MM-dd"
@@ -864,6 +872,7 @@
                       <el-date-picker
                         v-if="child.name"
                         v-model="child.creditDueDate"
+                        v-date-format
                         type="date"
                         placeholder="选择日期"
                         value-format="yyyy-MM-dd"
@@ -943,7 +952,7 @@
               <template slot="title">
                 <span class="collapse-title">{{ item.name }} {{ item.remarks ? '-' + item.remarks : '' }}</span>
               </template>
-              <el-row v-for="child in item.children" :key="child.id" style="margin-bottom: 20px;">
+              <el-row v-for="(child, arr) in item.children" :key="child.id" style="margin-bottom: 20px;">
                 <el-col :span="6">
                   <span>{{ child.name }}</span>
                 <!--<el-checkbox v-model="child.checked" :label="child.name" border />-->
@@ -959,6 +968,7 @@
                   <el-date-picker
                     v-if="!child.checked"
                     v-model="child.creditDueDate"
+                    v-date-format="{obj: 'changeData.children', index: arr, modelName: 'creditDueDate'}"
                     type="date"
                     size="mini"
                     placeholder="选择日期"
@@ -1230,7 +1240,6 @@ export default {
           i.creditDueDate = event
         }
       })
-      console.log(item)
     },
     unionDateSet: function(name) {
       return name === '权证类' || name === '贷款业务要件类' || name === '承兑业务要件类' || name === '贴现业务要件类' || name === '保函业务要件类'
@@ -1392,6 +1401,7 @@ export default {
       newItem.uid = uuid.v1()
       newItem.checkedRecordFileTypeId = 0
       newItem.children.forEach(item => {
+        item.id = 0
         item.checedRecordFileId = 0
       })
       parent.splice(index + 1, 0, newItem)
@@ -1402,11 +1412,22 @@ export default {
     },
     addRadioChange: async function(val) {
       const res = await addRecordPageList({ id: val })
+      res.data.forEach(i => {
+        if (i.name === '权证类' || i.name === '贷款业务要件类' || i.name === '承兑业务要件类' || i.name === '贴现业务要件类' || i.name === '保函业务要件类') {
+          i.date = null
+        }
+      })
       this.addForm.fileList = res.data
     },
     editRadioChange: async function(val) {
       const res = await updateRecordPageList({ id: val, recordId: this.editForm.record.id })
+      res.data.forEach(i => {
+        if (i.name === '权证类' || i.name === '贷款业务要件类' || i.name === '承兑业务要件类' || i.name === '贴现业务要件类' || i.name === '保函业务要件类') {
+          i.date = null
+        }
+      })
       this.editForm.fileList = res.data
+      // this.editForm.fileList = res.data
     },
     getRecordTypeList: async function() {
       const res = await getRecordTypeList()
@@ -1454,8 +1475,7 @@ export default {
     },
     // 填充Select下拉框用户列表
     getUserSelect: async function(node) {
-      const id = node
-      const res = await getUserSelect({ id: id })
+      const res = await getUserSelect({ id: node })
       if (res && res.success) {
         console.log(this.userList)
         this.userList = res.data
@@ -1574,7 +1594,6 @@ export default {
         })
       }
     },
-
     // 显示新增界面
     async onAdd() {
       if (this.departments.length === 0) {

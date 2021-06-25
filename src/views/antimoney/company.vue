@@ -51,7 +51,8 @@
       v-model="contractVisible"
       :visible.sync="contractVisible"
       title="查看合同"
-      width="80%"
+      fullscreen
+      :close-on-click-modal="false"
     >
       <container>
         <template #header>
@@ -60,6 +61,15 @@
               <el-col :span="4">
                 <el-form-item>
                   <el-input v-model="contractFilter.contractNo" placeholder="合同号" clearable>
+                    <template #prefix>
+                      <i class="el-input__icon el-icon-search" />
+                    </template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="4">
+                <el-form-item>
+                  <el-input v-model="contractFilter.amount" placeholder="金额" clearable>
                     <template #prefix>
                       <i class="el-input__icon el-icon-search" />
                     </template>
@@ -87,7 +97,7 @@
         >
           <el-table-column type="expand">
             <template slot-scope="props">
-              <el-form label-position="left" label-width="150px">
+              <el-form label-position="left">
                 <el-form-item v-for="item in props.row.files" :key="item.id" :label="item.fileName">
                   <el-tag :type="item.overSign ? 'success' : 'danger'">{{ item.overSign ? '已完成' : '未完成' }}</el-tag>
                 </el-form-item>
@@ -95,31 +105,43 @@
             </template>
           </el-table-column>
           <el-table-column prop="id" label="ID" />
-          <el-table-column prop="ladingInquireDate" label="提单查询日期" width="170px" />
-          <el-table-column prop="contractNo" label="合同号" width="200px" />
-          <el-table-column prop="remitterName" label="汇款人姓名" width="150px" />
-          <el-table-column prop="remitterAddress" label="汇款人国别" width="200px" />
-          <el-table-column prop="consigneeName" label="收货人姓名" width="150px" />
-          <el-table-column prop="consigneeAddress" label="收货人国别" width="200px" />
-          <el-table-column prop="currency" label="币种" width="100px" />
-          <el-table-column prop="amount" label="金额" width="100px" />
-          <el-table-column prop="settlementDate" label="解付日期" width="170px" />
-          <el-table-column prop="paymentNature" label="款项性质" width="150px" />
-          <el-table-column prop="deliveryDate" label="发货日期" width="170px" />
-          <el-table-column prop="dataSubmitInfo" label="资料提交情况" width="170px" />
-          <el-table-column prop="remarks" label="备注" width="150px" />
-          <el-table-column label="提醒时间" width="170px">
+          <el-table-column label="提单查询日期" width="120px">
             <template slot-scope="scope">
-              <el-popover v-if="scope.row.awakeTime" trigger="hover" placement="top">
-                <p>提醒事项</p>
-                <p>{{ scope.row.awakeNotes }}</p>
-                <div slot="reference" class="name-wrapper">
-                  <el-tag size="medium">{{ scope.row.awakeTime }}</el-tag>
-                </div>
-              </el-popover>
+              {{ (scope.row.ladingInquireDate || '').split(' ')[0] }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="350px" fixed="right">
+          <el-table-column prop="contractNo" label="合同号" width="200px" />
+          <el-table-column prop="remitterName" label="汇款人姓名" width="150px" show-tooltip-when-overflow />
+          <el-table-column prop="remitterAddress" label="汇款人国别" width="100px" />
+          <el-table-column prop="consigneeName" label="收货人姓名" width="150px" show-tooltip-when-overflow />
+          <el-table-column prop="consigneeAddress" label="收货人国别" width="100px" />
+          <el-table-column prop="currency" label="币种" width="100px" />
+          <el-table-column prop="amount" label="金额" width="100px" />
+          <el-table-column label="解付日期" width="120px">
+            <template slot-scope="scope">
+              {{ (scope.row.settlementDate || '').split(' ')[0] }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="paymentNature" label="款项性质" width="100px" />
+          <el-table-column label="发货日期" width="120px">
+            <template slot-scope="scope">
+              {{ (scope.row.deliveryDate || '').split(' ')[0] }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="dataSubmitInfo" label="资料提交情况" width="120px" show-overflow-tooltip />
+          <el-table-column prop="remarks" label="备注" />
+          <!--          <el-table-column label="提醒时间" width="120px">-->
+          <!--            <template slot-scope="scope">-->
+          <!--              <el-popover v-if="scope.row.awakeTime" trigger="hover" placement="top">-->
+          <!--                <p>提醒事项</p>-->
+          <!--                <p>{{ scope.row.awakeNotes }}</p>-->
+          <!--                <div slot="reference" class="name-wrapper">-->
+          <!--                  <el-tag size="medium">{{ (scope.row.awakeTime || '').split(' ')[0] }}</el-tag>-->
+          <!--                </div>-->
+          <!--              </el-popover>-->
+          <!--            </template>-->
+          <!--          </el-table-column>-->
+          <el-table-column label="操作" width="350px" fixed="right" class-name="leave-alone">
             <template v-slot="{ $index, row }">
               <el-button @click="getNotice(row)">设置提醒时间</el-button>
               <el-button @click="openFileDialog(row.id)">添加文件</el-button>
@@ -134,6 +156,7 @@
           title="设置提醒时间"
           :visible.sync="SetDialogVisible"
           append-to-body
+          :close-on-click-modal="false"
         >
           <el-form ref="setNoticeForm" label-width="150px" label-position="left" :model="setNoticeForm">
             <el-form-item
@@ -184,6 +207,7 @@
           :title="contractDialogTitle"
           :visible.sync="contractDialogVisible"
           append-to-body
+          :close-on-click-modal="false"
         >
           <el-form ref="contractForm" label-width="150px" label-position="left" :model="contractForm">
             <el-form-item
@@ -337,6 +361,7 @@
           title="文件查看"
           :visible.sync="fileVisible"
           append-to-body
+          :close-on-click-modal="false"
         >
           <el-row v-for="item in fileList.filter(i => i.presetFileId !== 0)" :key="item.uid" border style="margin-bottom: 20px">
             <el-col :span="8">
@@ -419,6 +444,7 @@
           title="图片上传"
           :visible.sync="pictureDialogVisible"
           append-to-body
+          :close-on-click-modal="false"
           @closed="closePicDialogFunc"
         >
           <el-row>
@@ -470,6 +496,7 @@
       width="50%"
       :visible.sync="companyDialogVisible"
       :title="companyDialogTitle"
+      :close-on-click-modal="false"
     >
       <el-form ref="companyForm" label-position="left" :model="companyForm" label-width="150px">
         <el-form-item
@@ -579,6 +606,7 @@ export default {
       contractFilter: {
         companyId: 0,
         contractNo: '',
+        amount: null,
         noticeSign: false
       },
       // 公司分页
@@ -1094,6 +1122,7 @@ export default {
     // 打开添加或编辑合同界面
     openContractDialog: async function(type, id) {
       // this.$refs.contractForm.resetFields()
+      Object.assign(this.contractForm, this.$options.data().contractForm)
       this.contractOperateType = type
       if (type === 'Add') {
         this.contractDialogTitle = '添加合同'
@@ -1101,7 +1130,6 @@ export default {
         const res = await getContract({ contractId: id })
         if (res.success) {
           this.contractForm = res.data
-          this.contractVisible = true
         } else {
           this.$message({
             type: 'error',
@@ -1222,7 +1250,7 @@ export default {
         pageSize: this.pager.pageSize,
         filter: this.filter
       }
-
+      this.listLoading = true
       const res = await companyPage(para)
 
       if (res.success) {
@@ -1239,6 +1267,7 @@ export default {
           type: 'error'
         })
       }
+      this.listLoading = false
     },
     // 获取公司下的合同文件
     getContractList: async function() {
@@ -1247,6 +1276,7 @@ export default {
         pageSize: this.contractPager.pageSize,
         filter: this.contractFilter
       }
+      this.contractListLoading = true
       const res = await contractPage(para)
       if (res.success) {
         this.contractList = res.data.list
@@ -1255,7 +1285,7 @@ export default {
         data.forEach(l => {
           l._loading = false
         })
-        this.contractPager.total = data.length
+        this.contractPager.total = res.data.total
         this.contractVisible = true
       } else {
         this.$message({
@@ -1263,6 +1293,7 @@ export default {
           message: res.msg
         })
       }
+      this.contractListLoading = false
     },
     // 添加其他文件
     addOtherFile: function() {
