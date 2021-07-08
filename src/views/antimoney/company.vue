@@ -100,36 +100,36 @@
               <el-form label-position="left">
                 <el-form-item v-for="item in props.row.files" :key="item.id" :label="item.fileName">
                   <el-tag :type="item.overSign ? 'success' : 'danger'">{{ item.overSign ? '已完成' : '未完成' }}</el-tag>
+                  <el-button style="margin-left: 20px" @click="getPictureList(props.row.id, item.id)">点击查看</el-button>
                 </el-form-item>
               </el-form>
             </template>
           </el-table-column>
-          <el-table-column prop="id" label="ID" />
-          <el-table-column label="提单查询日期" width="120px">
-            <template slot-scope="scope">
-              {{ (scope.row.ladingInquireDate || '').split(' ')[0] }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="contractNo" label="合同号" width="200px" />
-          <el-table-column prop="remitterName" label="汇款人姓名" width="150px" show-tooltip-when-overflow />
+          <el-table-column prop="contractNo" label="合同号" width="150px" show-overflow-tooltip />
+          <el-table-column prop="remitterName" label="汇款人名称" width="150px" show-tooltip-when-overflow />
           <el-table-column prop="remitterAddress" label="汇款人国别" width="100px" />
-          <el-table-column prop="consigneeName" label="收货人姓名" width="150px" show-tooltip-when-overflow />
+          <el-table-column prop="consigneeName" label="收货人名称" width="150px" show-tooltip-when-overflow />
           <el-table-column prop="consigneeAddress" label="收货人国别" width="100px" />
           <el-table-column prop="currency" label="币种" width="100px" />
           <el-table-column prop="amount" label="金额" width="100px" />
-          <el-table-column label="解付日期" width="120px">
-            <template slot-scope="scope">
-              {{ (scope.row.settlementDate || '').split(' ')[0] }}
-            </template>
-          </el-table-column>
           <el-table-column prop="paymentNature" label="款项性质" width="100px" />
           <el-table-column label="发货日期" width="120px">
             <template slot-scope="scope">
               {{ (scope.row.deliveryDate || '').split(' ')[0] }}
             </template>
           </el-table-column>
-          <el-table-column prop="dataSubmitInfo" label="资料提交情况" width="120px" show-overflow-tooltip />
-          <el-table-column prop="remarks" label="备注" />
+          <el-table-column label="解付日期" width="120px">
+            <template slot-scope="scope">
+              {{ (scope.row.settlementDate || '').split(' ')[0] }}
+            </template>
+          </el-table-column>
+          <el-table-column label="提单查询日期" width="120px">
+            <template slot-scope="scope">
+              {{ (scope.row.ladingInquireDate || '').split(' ')[0] }}
+            </template>
+          </el-table-column>
+          <!--          <el-table-column prop="dataSubmitInfo" label="资料提交情况" width="120px" show-overflow-tooltip />-->
+          <!--          <el-table-column prop="remarks" label="备注" width="120px" show-overflow-tooltip />-->
           <!--          <el-table-column label="提醒时间" width="120px">-->
           <!--            <template slot-scope="scope">-->
           <!--              <el-popover v-if="scope.row.awakeTime" trigger="hover" placement="top">-->
@@ -141,15 +141,21 @@
           <!--              </el-popover>-->
           <!--            </template>-->
           <!--          </el-table-column>-->
-          <el-table-column label="操作" width="350px" fixed="right" class-name="leave-alone">
+          <el-table-column label="操作" width="280px" fixed="right" class-name="leave-alone">
             <template v-slot="{ $index, row }">
-              <el-button @click="getNotice(row)">设置提醒时间</el-button>
-              <el-button @click="openFileDialog(row.id)">添加文件</el-button>
+              <el-button @click="getNotice(row)">提醒</el-button>
+              <el-button @click="openFileDialog(row.id)">文件</el-button>
               <el-button type="primary" @click="openContractDialog('Edit', row.id)">编辑</el-button>
               <confirm-button type="delete" :loading="row._loading" @click="deleteContract($index, row)" />
             </template>
           </el-table-column>
         </el-table>
+        <!--        查看详情图片框-->
+        <el-image-viewer
+          v-if="pictureVisible"
+          :on-close="()=>{ pictureVisible = false }"
+          :url-list="pictureList"
+        />
         <!--        设置提醒时间-->
         <el-dialog
           width="50%"
@@ -337,18 +343,18 @@
                 value-format="yyyy-MM-dd"
               />
             </el-form-item>
-            <el-form-item
-              prop="remarks"
-              label="资料提交情况"
-            >
-              <el-input v-model="contractForm.dataSubmitInfo" placeholder="请输入资料提交情况" />
-            </el-form-item>
-            <el-form-item
-              prop="remarks"
-              label="备注"
-            >
-              <el-input v-model="contractForm.remarks" placeholder="请输入备注" />
-            </el-form-item>
+            <!--            <el-form-item-->
+            <!--              prop="remarks"-->
+            <!--              label="资料提交情况"-->
+            <!--            >-->
+            <!--              <el-input v-model="contractForm.dataSubmitInfo" placeholder="请输入资料提交情况" />-->
+            <!--            </el-form-item>-->
+            <!--            <el-form-item-->
+            <!--              prop="remarks"-->
+            <!--              label="备注"-->
+            <!--            >-->
+            <!--              <el-input v-model="contractForm.remarks" placeholder="请输入备注" />-->
+            <!--            </el-form-item>-->
           </el-form>
           <span slot="footer" class="dialog-footer">
             <el-button @click="contractDialogVisible = false">取 消</el-button>
@@ -551,7 +557,7 @@ import {
   addOrEditNotes,
   generateContractList
 } from '@/api/antimoney/contract'
-import { addFile } from '@/api/antimoney/file'
+import { addFile, getPictureList } from '@/api/antimoney/file'
 import { getCurrencyList } from '@/api/antimoney/currency'
 
 const axios = require('axios')
@@ -731,7 +737,11 @@ export default {
       // 合约对话框是否显示
       contractVisible: false,
       // 文件对话框是否显示
-      fileVisible: false
+      fileVisible: false,
+      // 查看详情图片显示
+      pictureVisible: false,
+      // 查看详情图片URL列表
+      pictureList: []
     }
   },
   computed: {
@@ -741,11 +751,22 @@ export default {
   },
   mounted() {
     this.pager = this.$refs.pager.getPager()
+    this.pager.pageSize = 20
     this.contractPager = this.$refs.pager.getPager()
+    this.contractPager.pageSize = 20
     this.onGetList()
     this.getCurrencyData()
   },
   methods: {
+    async getPictureList(contractId, fileId) {
+      const res = await getPictureList({ contractId: contractId, fileId: fileId })
+      if (res.code === 1) {
+        this.pictureList = res.data
+        this.pictureVisible = true
+      } else {
+        this.$message.error('没有图片列表!')
+      }
+    },
     async handleChange(file, fileList) {
       const existFile = fileList.slice(0, fileList.length - 1).find(f => f.name === file.name)
       if (existFile) {

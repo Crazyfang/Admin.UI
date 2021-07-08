@@ -45,14 +45,18 @@ Vue.directive('dateFormat', {
     let arr = []
     const modelValue = function(value, len) {
       // 判断输入的时间为几位数，正则匹配相应的事件格式。可直接采用moment转换,更直接。
-      if (value.length > 5 && value.length < 9) {
-        value = value.replace(/^(\d{4})\D*(\d{1,2})\D*(\d{1,2})\D*/, '$1-$2-$3') // 格式化输入格式,2021-03-01
-      } else if (value.length > 9 && value.length < 13) {
-        value = value.replace(/^(\d{4})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*/, '$1-$2-$3 $4:$5') // 格式化输入格式,2021-03-01 09:50
-      } else if (value.length > 12) {
-        value = value.replace(/^(\d{4})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*/, '$1-$2-$3 $4:$5:$6') // 格式化输入格式,2020-03-01 09:50:30
+      if (value.substring(4, 5) === '-' && value.substring(7, 8) === '-') {
+        return true
       } else {
-        return false
+        if (value.length > 5 && value.length < 9) {
+          value = value.replace(/^(\d{4})\D*(\d{1,2})\D*(\d{1,2})\D*/, '$1-$2-$3') // 格式化输入格式,2021-03-01
+        } else if (value.length > 9 && value.length < 13) {
+          value = value.replace(/^(\d{4})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*/, '$1-$2-$3 $4:$5') // 格式化输入格式,2021-03-01 09:50
+        } else if (value.length > 12) {
+          value = value.replace(/^(\d{4})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*(\d{1,2})\D*/, '$1-$2-$3 $4:$5:$6') // 格式化输入格式,2020-03-01 09:50:30
+        } else {
+          return false
+        }
       }
       // const newValue = value.replace(/-/g,"/"); //解决前台new Date（yyyy-MM-dd）转化时间相差8小时的问题,不知道靠不靠谱，改用moment
       // const time = value && value.constructor == String ? new Date(newValue) : value  // 转换时间格式
